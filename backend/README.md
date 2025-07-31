@@ -8,7 +8,7 @@ Node.js backend API built with Express.js and Sequelize for PostgreSQL.
 backend/
 ├── src/
 │   ├── config/
-│   │   └── database.js          # Sequelize database configuration
+│   │   └── database.js          # Sequelize database configuration (ES modules)
 │   ├── middleware/
 │   │   └── index.js             # Custom middleware (CORS, error handling, logging)
 │   ├── models/
@@ -18,6 +18,12 @@ backend/
 │   │   └── health.js            # Health check routes
 │   ├── utils/                   # Utility functions (placeholder)
 │   └── server.js                # Main server entry point
+├── config/
+│   └── config.cjs               # Sequelize CLI configuration (CommonJS)
+├── database/
+│   ├── migrations/              # Database migration files
+│   └── seeders/                 # Database seeder files
+├── .sequelizerc                 # Sequelize CLI paths configuration
 ├── package.json                 # Dependencies and scripts
 └── README.md                    # This file
 ```
@@ -57,12 +63,45 @@ pnpm start
 
 ## 📋 Available Scripts
 
+### Development Scripts
 ```bash
 pnpm dev        # Start development server with nodemon (auto-reload)
 pnpm start      # Start production server
 pnpm build      # Build command (placeholder)
 pnpm test       # Run tests with Jest
 pnpm lint       # Run ESLint
+```
+
+### Database Scripts (Sequelize CLI)
+```bash
+# Database Management
+pnpm db:create                # Create database
+pnpm db:drop                  # Drop database
+pnpm db:migrate               # Run pending migrations
+pnpm db:migrate:undo          # Undo last migration
+pnpm db:seed:all              # Run all seeders
+pnpm db:seed:undo:all         # Undo all seeders
+
+# Code Generation
+pnpm migration:create <name>  # Create new migration
+pnpm model:create <name>      # Create new model with migration
+pnpm seed:create <name>       # Create new seeder
+```
+
+### Example Usage
+```bash
+# Create a new model and migration
+pnpm model:create User --attributes firstName:string,lastName:string,email:string
+
+# Create a standalone migration
+pnpm migration:create add-indexes-to-users
+
+# Run migrations
+pnpm db:migrate
+
+# Create and run a seeder
+pnpm seed:create demo-users
+pnpm db:seed:all
 ```
 
 ## 🌐 API Endpoints
@@ -123,13 +162,46 @@ PORT=3000
 
 ### Database Configuration
 
-Database configuration is handled in `src/config/database.js`:
+Database configuration is handled in two places:
 
-- **Connection pooling** with max 5 connections
-- **Automatic retries** and timeout handling
-- **Development logging** (when `DB_LOGGING=true`)
-- **UTC timezone** by default
-- **Underscored naming** for database fields
+**1. Application Config (`src/config/database.js`)**
+- ES module format for the application
+- Connection pooling with max 5 connections
+- Automatic retries and timeout handling
+- Development logging (when `DB_LOGGING=true`)
+- UTC timezone by default
+- Underscored naming for database fields
+
+**2. Sequelize CLI Config (`config/config.cjs`)**
+- CommonJS format for CLI commands
+- Environment-specific configurations (development, test, production)
+- Database creation and migration support
+- Production SSL options
+
+### Sequelize CLI Setup
+
+The project includes a fully configured Sequelize CLI setup:
+
+**Configuration Files:**
+- `.sequelizerc` - Defines file paths for CLI
+- `config/config.cjs` - Database configurations for different environments
+
+**Directory Structure:**
+- `database/migrations/` - Database schema changes
+- `database/seeders/` - Sample/test data
+- `src/models/` - Sequelize model definitions
+
+**Environment Support:**
+- **Development** - Local PostgreSQL with logging
+- **Test** - Separate test database
+- **Production** - Production database with SSL support
+
+**Key Features:**
+- Automatic database creation
+- Migration tracking and rollback
+- Model and migration generation
+- Environment-specific configurations
+- CommonJS/ES module compatibility
 
 ## 🔧 Development Features
 
@@ -144,9 +216,12 @@ Database configuration is handled in `src/config/database.js`:
 ### Database Integration
 
 - **Sequelize ORM** with PostgreSQL
+- **Sequelize CLI** for migrations and model generation
 - **Connection testing** on server startup
 - **Graceful shutdown** with connection cleanup
 - **Model organization** ready for future models
+- **Database migrations** with version control
+- **Database seeders** for test data
 
 ### Development Tools
 

@@ -9,7 +9,7 @@
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <div class="card">
         <div class="flex items-center">
           <div class="flex-shrink-0">
@@ -51,6 +51,43 @@
           </div>
         </div>
       </div>
+
+      <div class="card">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+              <span class="text-white text-sm font-bold">⏳</span>
+            </div>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-lg font-medium text-gray-900">Pending</h3>
+            <p class="text-2xl font-bold text-orange-600">{{ stats.pending }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delivery Rate -->
+    <div class="card">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">📊 Delivery Performance</h3>
+      <div class="flex items-center justify-between">
+        <span class="text-sm text-gray-600">Delivery Rate</span>
+        <div class="flex items-center">
+          <div class="w-24 bg-gray-200 rounded-full h-2 mr-3">
+            <div 
+              :class="deliveryRate >= 80 ? 'bg-green-500' : deliveryRate >= 60 ? 'bg-yellow-500' : 'bg-red-500'"
+              class="h-2 rounded-full transition-all duration-300"
+              :style="{ width: deliveryRate + '%' }"
+            ></div>
+          </div>
+          <span 
+            :class="deliveryRate >= 80 ? 'text-green-600' : deliveryRate >= 60 ? 'text-yellow-600' : 'text-red-600'"
+            class="font-bold"
+          >
+            {{ deliveryRate }}%
+          </span>
+        </div>
+      </div>
     </div>
 
     <!-- API Status -->
@@ -77,59 +114,37 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import { computed, onMounted } from 'vue'
+import { useAppStore } from '../stores/app.js'
 
 export default {
   name: 'Home',
   setup() {
-    const stats = ref({
-      totalShipments: 0,
-      delivered: 0,
-      inTransit: 0
-    })
+    // Use Pinia store
+    const appStore = useAppStore()
 
-    const apiStatus = ref({
-      connected: false,
-      message: 'Not checked'
-    })
+    // Computed properties from store
+    const stats = computed(() => appStore.stats)
+    const apiStatus = computed(() => ({
+      connected: appStore.apiConnected,
+      message: appStore.apiMessage
+    }))
+    const loading = computed(() => appStore.loading)
+    const deliveryRate = computed(() => appStore.deliveryRate)
 
-    const loading = ref(false)
-
-    const checkApiStatus = async () => {
-      loading.value = true
-      try {
-        const response = await axios.get('/api/health')
-        apiStatus.value = {
-          connected: true,
-          message: `Connected - ${response.data.message}`
-        }
-        
-        // Mock some stats for demonstration
-        stats.value = {
-          totalShipments: Math.floor(Math.random() * 100) + 50,
-          delivered: Math.floor(Math.random() * 50) + 20,
-          inTransit: Math.floor(Math.random() * 30) + 10
-        }
-      } catch (error) {
-        apiStatus.value = {
-          connected: false,
-          message: 'Connection failed - Backend server may be down'
-        }
-        console.error('API connection failed:', error)
-      } finally {
-        loading.value = false
-      }
-    }
+    // Actions
+    const checkApiStatus = () => appStore.checkApiHealth()
 
     onMounted(() => {
-      checkApiStatus()
+      // Initialize the app when component mounts
+      appStore.initializeApp()
     })
 
     return {
       stats,
       apiStatus,
       loading,
+      deliveryRate,
       checkApiStatus
     }
   }

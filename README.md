@@ -160,12 +160,49 @@ The backend follows a clean, organized structure:
 ### Frontend Commands
 ```bash
 cd frontend
-pnpm dev      # Start Vite development server
+pnpm dev      # Start Vite development server (http://localhost:5173)
 pnpm build    # Build for production
 pnpm preview  # Preview production build
 pnpm test     # Run Vitest tests
 pnpm lint     # Run ESLint for Vue files
 ```
+
+## 🎨 Frontend Architecture
+
+The frontend is built with modern Vue.js 3 and includes:
+
+### Core Features
+- **Vue.js 3** with Composition API
+- **Vite** for fast development and optimized builds
+- **Tailwind CSS** for utility-first styling
+- **Vue Router** for client-side routing
+- **Pinia** for state management
+- **Axios** for HTTP requests
+
+### Directory Structure
+- **`src/views/`** - Vue page components
+- **`src/stores/`** - Pinia state management stores
+- **`src/components/`** - Reusable Vue components (future)
+- **`src/assets/`** - Static assets (future)
+
+### State Management
+The app uses Pinia for centralized state management:
+- **API connectivity status**
+- **Logistics statistics** (shipments, delivery rates)
+- **Application settings** (theme, notifications)
+- **Loading states** and error handling
+
+### Styling System
+- **Tailwind CSS** with custom design tokens
+- **Responsive design** (mobile-first approach)
+- **Custom component classes** for consistency
+- **Dark mode ready** (in store settings)
+
+### API Integration
+- **Proxy configuration** in Vite for seamless development
+- **Automatic API health checking**
+- **Error handling** and retry logic
+- **Mock data generation** for development
 
 ## 🐳 Docker PostgreSQL Setup
 
@@ -270,18 +307,30 @@ VITE_API_BASE_URL=http://localhost:3000
 
 ## 🏃‍♂️ Next Steps
 
-This is the foundation setup for Phase 1, Tasks 1.1, 1.2 & 1.3. The project includes:
+This is the foundation setup for Phase 1 (Tasks 1.1-1.4) & Phase 2 (Task 2.1). The project includes:
 
+### Phase 1: Project Setup & Infrastructure ✅
 - ✅ Nix flakes development environment  
 - ✅ pnpm workspaces monorepo structure
 - ✅ Docker PostgreSQL setup with data persistence
 - ✅ Express.js backend with Sequelize ORM
 - ✅ Organized backend architecture (routes, models, middleware)
-- ✅ Health check API endpoints
-- ✅ Database connectivity testing
-- ✅ Vue.js 3 frontend with Tailwind CSS
+- ✅ Health check API endpoints with database connectivity
+- ✅ Vue.js 3 frontend with Composition API
+- ✅ Tailwind CSS styling system
+- ✅ Vite development server with API proxy
+- ✅ Vue Router for client-side routing
+- ✅ Pinia state management with persistence
+- ✅ Responsive dashboard with logistics stats
 - ✅ Environment variable management
 - ✅ Development tooling and configuration
+
+### Phase 2: Database & Models
+- ✅ **Task 2.1**: Sequelize CLI configuration with PostgreSQL
+  - Database migrations and seeders setup
+  - Model generation capabilities
+  - Environment-specific configurations
+  - CommonJS/ES module compatibility
 
 **Upcoming tasks will add:**
 - Database models and migrations
