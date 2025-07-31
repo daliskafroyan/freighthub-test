@@ -528,13 +528,13 @@ export default {
     }
     
     const viewOrder = (order) => {
-      // Navigate to order details page (to be implemented)
+      // Navigate to order details page
       router.push(`/orders/${order.id}`)
     }
     
     const updateOrderStatus = (order) => {
-      // Navigate to order edit page or show modal (to be implemented)
-      router.push(`/orders/${order.id}/edit`)
+      // Navigate to order details page where status can be updated
+      router.push(`/orders/${order.id}`)
     }
     
     const cancelOrder = async (order) => {

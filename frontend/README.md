@@ -20,7 +20,9 @@ frontend/
 │   │   └── OrderForm.vue        # Order creation form component
 │   ├── views/
 │   │   ├── Home.vue             # Dashboard with stats and quick actions
-│   │   └── OrdersList.vue       # Orders listing with pagination and filtering
+│   │   ├── OrdersList.vue       # Orders listing with pagination and filtering
+│   │   ├── OrderDetails.vue     # Detailed order view with status updates
+│   │   └── TrackOrder.vue       # Public order tracking by tracking number
 │   ├── stores/
 │   │   └── app.js               # Pinia store for global state management
 │   ├── App.vue                  # Main app component with navigation
@@ -115,6 +117,65 @@ A full-featured orders listing page with advanced functionality:
   - Comprehensive error handling with user-friendly messages
   - Automatic list refresh after successful cancellation
 
+### 📦 OrderDetails Component
+
+**Location**: `src/views/OrderDetails.vue`
+
+Comprehensive order details view with integrated status update functionality:
+
+#### Features:
+- **Complete Order Information**: Full order details with visual timeline
+- **Status Update Integration**: Dropdown to change order status with validation
+- **Business Rules Enforcement**: Status transition validation and restrictions
+- **Cancel Order Functionality**: Delete orders with confirmation (pending only)
+- **Copy Tracking Number**: One-click clipboard copy functionality
+- **Timeline Visualization**: Visual order progress and status history
+- **Toast Notifications**: Success/error messages with auto-dismiss
+- **Responsive Layout**: Sidebar actions on desktop, stacked on mobile
+
+#### Business Rules:
+- **Status Transitions**: 
+  - Pending → In Transit, Canceled
+  - In Transit → Delivered, Canceled
+  - Delivered → (no changes allowed)
+  - Canceled → (no changes allowed)
+- **Cancellation**: Only pending orders can be canceled
+- **Validation**: All status changes validated on both client and server
+
+#### Route Parameters:
+```javascript
+// Access via /orders/:id
+{ path: '/orders/:id', name: 'OrderDetails', component: OrderDetails, props: true }
+```
+
+### 🔍 TrackOrder Component
+
+**Location**: `src/views/TrackOrder.vue`
+
+Public order tracking component for customers to track shipments:
+
+#### Features:
+- **Public Access**: No authentication required for tracking
+- **Tracking Number Input**: Large, user-friendly input with validation
+- **Real-time Status**: Live order status with progress visualization
+- **Delivery Progress**: Visual progress bar with status steps
+- **Timeline Display**: Order creation and status update history
+- **Copy Functionality**: Copy tracking number to clipboard
+- **Refresh Capability**: Re-fetch latest order status
+- **Error Handling**: User-friendly error messages for invalid tracking numbers
+
+#### Progress Visualization:
+- **Order Placed**: Initial status (yellow)
+- **In Transit**: Shipping status (blue) 
+- **Delivered**: Final status (green)
+- **Canceled**: Canceled status (red)
+
+#### Usage:
+```javascript
+// Access via /track
+// User enters tracking number like: TRK123456ABCDEF
+```
+
 ### 🏠 Home Component (Dashboard)
 
 **Location**: `src/views/Home.vue`
@@ -125,11 +186,12 @@ Enhanced dashboard with logistics statistics and quick actions:
 - **Statistics Cards**: Total shipments, delivered, in transit, pending
 - **Delivery Rate**: Progress bar with color-coded performance
 - **API Status**: Real-time API connection monitoring
-- **Quick Actions**: Direct links to create order and view orders
+- **Quick Actions**: Direct links to create order, view orders, and track orders
 
 #### Quick Actions:
 - **Create New Order**: Direct navigation to order form
 - **View All Orders**: Navigate to orders listing page
+- **Track Order**: Navigate to public tracking page
 
 ## 🗂️ State Management
 
@@ -209,16 +271,32 @@ Custom color palette and component classes:
 const routes = [
   { path: '/', name: 'Home', component: Home },
   { path: '/orders', name: 'OrdersList', component: OrdersList },
-  { path: '/orders/create', name: 'CreateOrder', component: OrderForm }
+  { path: '/orders/create', name: 'CreateOrder', component: OrderForm },
+  { path: '/orders/:id', name: 'OrderDetails', component: OrderDetails, props: true },
+  { path: '/track', name: 'TrackOrder', component: TrackOrder }
 ]
 ```
+
+#### Route Details:
+- **`/`** - Dashboard with statistics and quick actions
+- **`/orders`** - Complete orders listing with filtering and pagination
+- **`/orders/create`** - Order creation form
+- **`/orders/:id`** - Detailed order view with status update functionality  
+- **`/track`** - Public order tracking by tracking number
 
 ### Navigation
 
 Enhanced navigation with:
-- **Active State**: Visual indicators for current page
+- **Active State**: Visual indicators for current page  
 - **Icons**: Emoji and SVG icons for better UX
 - **CTA Button**: Prominent "Create Order" button
+- **Public Access**: Track page accessible without authentication
+
+#### Navigation Structure:
+- **📊 Dashboard** - Home page with statistics and quick actions
+- **📦 Orders** - Orders management (active for both list and details)
+- **🔍 Track** - Public order tracking
+- **Create Order** - Prominent call-to-action button
 
 ### Protected Routes (Future)
 
@@ -416,9 +494,63 @@ VITE_APP_TITLE=Logistics Tracking App
 - **Offline Support**: PWA with offline caching
 
 ### Component Improvements:
-- **Order Details View**: Detailed order tracking page
-- **Status Update Form**: In-line status management
-- **Batch Actions**: Multi-select operations
-- **Advanced Charts**: Data visualization with Chart.js
+- **Batch Actions**: Multi-select operations for orders
+- **Advanced Charts**: Data visualization with Chart.js  
+- **Real-time Updates**: WebSocket integration for live status updates
+- **Advanced Search**: Full-text search across orders
+- **Export Functionality**: PDF/CSV export for order data
 
-This frontend provides a solid foundation for a production-ready logistics tracking application with modern development practices and comprehensive user experience design. 
+## 🔒 Business Rules Implementation
+
+### Status Transition Rules:
+```javascript
+const transitions = {
+  'Pending': ['In Transit', 'Canceled'],
+  'In Transit': ['Delivered', 'Canceled'], 
+  'Delivered': [], // Terminal state
+  'Canceled': []   // Terminal state
+}
+
+// Validation function
+const isValidStatusTransition = (currentStatus, newStatus) => {
+  return transitions[currentStatus]?.includes(newStatus) || false
+}
+```
+
+### Order Cancellation Rules:
+- Only orders with **"Pending"** status can be canceled
+- Confirmation dialog required for all cancellations
+- Successful cancellation removes order from database
+- Failed cancellations show appropriate error messages
+
+### Tracking Number Validation:
+- Format: `TRK` + 6-digit timestamp + 6-character hex string
+- Example: `TRK859243AB7D2F`
+- Client-side format validation before API calls
+- Server-side validation for additional security
+
+## 🎯 Component Integration
+
+### Complete User Workflows:
+
+**1. Order Creation Flow:**
+```
+Dashboard → Create Order → Form Validation → API Call → Success → Redirect to Orders
+```
+
+**2. Order Management Flow:**
+```
+Dashboard → Orders List → View Details → Update Status → Confirmation → Refresh
+```
+
+**3. Public Tracking Flow:**
+```
+Dashboard/Direct → Track Order → Enter Tracking # → API Call → Display Status
+```
+
+**4. Order Cancellation Flow:**
+```
+Orders List → View Details → Cancel Order → Confirmation → API Delete → Redirect
+```
+
+This frontend provides a comprehensive, production-ready logistics tracking application with modern development practices, robust business rule enforcement, and exceptional user experience design. 

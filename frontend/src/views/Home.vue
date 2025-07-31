@@ -114,7 +114,7 @@
     <!-- Quick Actions -->
     <div class="card">
       <h3 class="text-lg font-medium text-gray-900 mb-4">🚀 Quick Actions</h3>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <router-link 
           to="/orders/create"
           class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors group"
@@ -142,6 +142,21 @@
           <div class="ml-4">
             <h4 class="text-sm font-medium text-gray-900">View All Orders</h4>
             <p class="text-sm text-gray-500">Manage existing orders</p>
+          </div>
+        </router-link>
+
+        <router-link 
+          to="/track"
+          class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors group"
+        >
+          <div class="flex items-center justify-center w-10 h-10 bg-primary-100 rounded-lg group-hover:bg-primary-200 transition-colors">
+            <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </div>
+          <div class="ml-4">
+            <h4 class="text-sm font-medium text-gray-900">Track Order</h4>
+            <p class="text-sm text-gray-500">Track by tracking number</p>
           </div>
         </router-link>
       </div>
