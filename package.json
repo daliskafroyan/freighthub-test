@@ -1,0 +1,21 @@
+{
+  "name": "logistics-tracking-app",
+  "version": "1.0.0",
+  "description": "A logistics tracking application built with Node.js and Vue.js",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel --recursive dev",
+    "build": "pnpm --recursive build",
+    "test": "pnpm --recursive test",
+    "lint": "pnpm --recursive lint",
+        "clean": "pnpm --recursive clean"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+} 
