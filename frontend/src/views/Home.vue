@@ -167,28 +167,51 @@
 <script>
 import { computed, onMounted } from 'vue'
 import { useAppStore } from '../stores/app.js'
+import { useOrdersStore } from '../stores/orders.js'
 
 export default {
   name: 'Home',
   setup() {
-    // Use Pinia store
+    // Use Pinia stores
     const appStore = useAppStore()
+    const ordersStore = useOrdersStore()
 
-    // Computed properties from store
-    const stats = computed(() => appStore.stats)
+    // Use real stats from orders store
+    const stats = computed(() => {
+      const orderCounts = ordersStore.ordersCount
+      return {
+        totalShipments: orderCounts.total,
+        delivered: orderCounts.delivered,
+        inTransit: orderCounts.inTransit,
+        pending: orderCounts.pending
+      }
+    })
+    
     const apiStatus = computed(() => ({
       connected: appStore.apiConnected,
       message: appStore.apiMessage
     }))
-    const loading = computed(() => appStore.loading)
-    const deliveryRate = computed(() => appStore.deliveryRate)
+    const loading = computed(() => appStore.loading || ordersStore.loading.orders)
+    const deliveryRate = computed(() => {
+      const total = stats.value.totalShipments
+      return total > 0 ? Math.round((stats.value.delivered / total) * 100) : 0
+    })
 
     // Actions
     const checkApiStatus = () => appStore.checkApiHealth()
 
-    onMounted(() => {
+    onMounted(async () => {
       // Initialize the app when component mounts
-      appStore.initializeApp()
+      await appStore.initializeApp()
+      
+      // Initialize orders store to get real statistics
+      if (ordersStore.orders.length === 0) {
+        try {
+          await ordersStore.initialize()
+        } catch (error) {
+          console.error('Failed to initialize orders for stats:', error)
+        }
+      }
     })
 
     return {

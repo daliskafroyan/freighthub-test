@@ -286,49 +286,36 @@
 </template>
 
 <script>
-import { ref } from 'vue'
-import axios from 'axios'
+import { ref, computed } from 'vue'
+import { useOrdersStore } from '../stores/orders.js'
 
 export default {
   name: 'TrackOrder',
   setup() {
-    // State
+    const ordersStore = useOrdersStore()
+    
+    // Local state
     const trackingNumber = ref('')
-    const order = ref(null)
-    const loading = ref(false)
-    const error = ref('')
     const message = ref('')
     const messageType = ref('success')
     
-    // Methods
+    // Store-based state
+    const order = computed(() => ordersStore.trackedOrder)
+    const loading = computed(() => ordersStore.loading.tracking)
+    const error = computed(() => ordersStore.errors.tracking)
+    
+    // Methods using store
     const trackOrder = async () => {
       if (!trackingNumber.value.trim()) return
       
-      loading.value = true
-      error.value = ''
-      order.value = null
+      // Clear previous tracked order
+      ordersStore.clearTrackedOrder()
       
       try {
-        const response = await axios.get(`/api/orders/track/${trackingNumber.value.trim()}`)
-        order.value = response.data.tracking
-        
+        await ordersStore.trackOrder(trackingNumber.value.trim())
       } catch (err) {
+        // Error is already handled by the store
         console.error('Error tracking order:', err)
-        
-        if (err.response?.status === 404) {
-          error.value = `No order found with tracking number "${trackingNumber.value.trim()}". Please check your tracking number and try again.`
-        } else if (err.response?.status === 400) {
-          error.value = 'Invalid tracking number format. Please enter a valid tracking number.'
-        } else if (err.response?.data?.message) {
-          error.value = err.response.data.message
-        } else if (err.request) {
-          error.value = 'Network error. Please check your connection and try again.'
-        } else {
-          error.value = 'An unexpected error occurred while tracking your order.'
-        }
-        
-      } finally {
-        loading.value = false
       }
     }
     

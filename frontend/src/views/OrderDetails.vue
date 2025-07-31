@@ -306,21 +306,22 @@
 <script>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import axios from 'axios'
+import { useOrdersStore } from '../stores/orders.js'
 
 export default {
   name: 'OrderDetails',
   setup() {
     const router = useRouter()
     const route = useRoute()
+    const ordersStore = useOrdersStore()
     
-    // State
-    const order = ref(null)
-    const loading = ref(false)
-    const error = ref('')
+    // Store-based state
+    const order = computed(() => ordersStore.currentOrder)
+    const loading = computed(() => ordersStore.loading.currentOrder)
+    const error = computed(() => ordersStore.errors.currentOrder)
     const newStatus = ref('')
-    const updatingStatus = ref(false)
-    const cancelling = ref(false)
+    const updatingStatus = computed(() => ordersStore.loading.updating)
+    const cancelling = computed(() => ordersStore.loading.deleting)
     const message = ref('')
     const messageType = ref('success')
     
@@ -344,52 +345,28 @@ export default {
       return transitions[currentStatus]?.includes(newStatus) || false
     }
     
-    // Methods
+    // Methods using store
     const fetchOrder = async () => {
       const orderId = route.params.id
       
       if (!orderId) {
-        error.value = 'Order ID is required'
+        ordersStore.setError('currentOrder', 'Order ID is required')
         return
       }
       
-      loading.value = true
-      error.value = ''
-      
       try {
-        const response = await axios.get(`/api/orders/${orderId}`)
-        order.value = response.data.order
-        
+        await ordersStore.fetchOrderById(orderId)
       } catch (err) {
+        // Error is already handled by the store
         console.error('Error fetching order:', err)
-        
-        if (err.response?.status === 404) {
-          error.value = 'Order not found. Please check the order ID and try again.'
-        } else if (err.response?.data?.message) {
-          error.value = err.response.data.message
-        } else if (err.request) {
-          error.value = 'Network error. Please check your connection and try again.'
-        } else {
-          error.value = 'An unexpected error occurred while loading the order.'
-        }
-        
-      } finally {
-        loading.value = false
       }
     }
     
     const updateOrderStatus = async () => {
       if (!newStatus.value || !order.value) return
       
-      updatingStatus.value = true
-      
       try {
-        const response = await axios.put(`/api/orders/${order.value.id}/status`, {
-          status: newStatus.value
-        })
-        
-        // Update the order with new status
-        order.value = { ...order.value, ...response.data.order }
+        await ordersStore.updateOrderStatus(order.value.id, newStatus.value)
         newStatus.value = ''
         
         showMessage(`Order status updated to ${order.value.status} successfully`, 'success')
@@ -397,22 +374,9 @@ export default {
       } catch (err) {
         console.error('Error updating order status:', err)
         
-        let errorMessage = 'Failed to update order status. '
-        
-        if (err.response?.data?.message) {
-          errorMessage += err.response.data.message
-        } else if (err.response?.status === 400) {
-          errorMessage += 'Invalid status change requested.'
-        } else if (err.request) {
-          errorMessage += 'Network error. Please try again.'
-        } else {
-          errorMessage += 'Please try again.'
-        }
-        
+        // Error message is already handled by the store
+        const errorMessage = ordersStore.errors.updating || 'Failed to update order status. Please try again.'
         showMessage(errorMessage, 'error')
-        
-      } finally {
-        updatingStatus.value = false
       }
     }
     
@@ -421,10 +385,8 @@ export default {
         return
       }
       
-      cancelling.value = true
-      
       try {
-        await axios.delete(`/api/orders/${order.value.id}`)
+        await ordersStore.cancelOrder(order.value.id)
         
         showMessage(`Order ${order.value.trackingNumber} has been cancelled successfully`, 'success')
         
@@ -436,22 +398,9 @@ export default {
       } catch (err) {
         console.error('Error cancelling order:', err)
         
-        let errorMessage = 'Failed to cancel order. '
-        
-        if (err.response?.data?.message) {
-          errorMessage += err.response.data.message
-        } else if (err.response?.status === 400) {
-          errorMessage += 'Order cannot be cancelled in its current state.'
-        } else if (err.request) {
-          errorMessage += 'Network error. Please try again.'
-        } else {
-          errorMessage += 'Please try again.'
-        }
-        
+        // Error message is already handled by the store
+        const errorMessage = ordersStore.errors.deleting || 'Failed to cancel order. Please try again.'
         showMessage(errorMessage, 'error')
-        
-      } finally {
-        cancelling.value = false
       }
     }
     

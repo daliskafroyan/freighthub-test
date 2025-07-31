@@ -24,7 +24,8 @@ frontend/
 │   │   ├── OrderDetails.vue     # Detailed order view with status updates
 │   │   └── TrackOrder.vue       # Public order tracking by tracking number
 │   ├── stores/
-│   │   └── app.js               # Pinia store for global state management
+│   │   ├── app.js               # Pinia store for global state management
+│   │   └── orders.js            # Pinia store for order management (CRUD operations)
 │   ├── App.vue                  # Main app component with navigation
 │   ├── main.js                  # App entry point with router and store setup
 │   └── style.css                # Global styles with Tailwind CSS
@@ -195,11 +196,85 @@ Enhanced dashboard with logistics statistics and quick actions:
 
 ## 🗂️ State Management
 
-### App Store (Pinia)
+The application uses **Pinia** for comprehensive state management with two main stores:
 
-**Location**: `src/stores/app.js`
+### Orders Store (Primary) - `src/stores/orders.js`
 
-Centralized state management for:
+**The main store handling all order-related operations and state:**
+
+#### State:
+```javascript
+{
+  orders: [],                 // Array of all loaded orders
+  currentOrder: null,         // Currently selected order details
+  trackedOrder: null,         // Order being tracked publicly
+  loading: {                  // Loading states for different operations
+    orders: false,
+    currentOrder: false,
+    creating: false,
+    updating: false,
+    deleting: false,
+    tracking: false
+  },
+  errors: {                   // Error states for different operations
+    orders: null,
+    currentOrder: null,
+    creating: null,
+    updating: null,
+    deleting: null,
+    tracking: null
+  },
+  pagination: {               // Pagination metadata
+    currentPage: 1,
+    totalPages: 1,
+    totalOrders: 0,
+    ordersPerPage: 10,
+    hasNextPage: false,
+    hasPreviousPage: false
+  },
+  filters: {                  // Current filters and sorting
+    status: '',
+    sortBy: 'createdAt',
+    sortOrder: 'DESC'
+  }
+}
+```
+
+#### Advanced Getters:
+- `ordersByStatus(status)`: Filter orders by specific status
+- `pendingOrders`: All pending orders
+- `inTransitOrders`: All in-transit orders
+- `deliveredOrders`: All delivered orders
+- `canceledOrders`: All canceled orders
+- `ordersCount`: Count of orders by status (used for dashboard stats)
+- `isLoading`: True if any operation is loading
+- `hasErrors`: True if any errors exist
+- `getOrderById(id)`: Find order by ID
+- `getOrderByTrackingNumber(trackingNumber)`: Find order by tracking number
+
+#### Complete CRUD Actions:
+- `fetchOrders(options)`: Fetch orders with pagination and filtering
+- `fetchOrderById(id)`: Fetch single order details
+- `createOrder(orderData)`: Create new order
+- `updateOrderStatus(orderId, newStatus)`: Update order status
+- `cancelOrder(orderId)`: Cancel/delete order
+- `trackOrder(trackingNumber)`: Track order by tracking number
+- `filterByStatus(status)`: Filter orders by status
+- `sortOrders(sortBy, sortOrder)`: Sort orders
+- `nextPage()` / `previousPage()` / `goToPage(page)`: Pagination navigation
+- `refreshOrders()`: Re-fetch current page
+- `initialize()`: Initialize store on app startup
+- `reset()`: Reset store to initial state
+
+#### Error Handling:
+- Comprehensive error states for each operation type
+- Automatic error clearing and message formatting
+- Network error detection and user-friendly messages
+- Centralized error management across all components
+
+### App Store (General) - `src/stores/app.js`
+
+**General application state and API connectivity:**
 
 #### State:
 ```javascript
@@ -207,12 +282,6 @@ Centralized state management for:
   isLoading: false,           // Global loading state
   apiConnected: false,        // API connection status
   apiMessage: '',             // API status message
-  stats: {                    // Dashboard statistics
-    totalShipments: 0,
-    delivered: 0,
-    inTransit: 0,
-    pending: 0
-  },
   settings: {                 // App settings
     theme: 'light',
     notifications: true,
@@ -223,14 +292,54 @@ Centralized state management for:
 ```
 
 #### Getters:
-- `deliveryRate`: Calculated delivery percentage
 - `isApiHealthy`: Boolean API health status
 - `loading`: Global loading state
 
 #### Actions:
 - `checkApiHealth()`: Test API connectivity
-- `updateMockStats()`: Update dashboard statistics
 - `initializeApp()`: Initialize app state
+
+### Complete Store Integration
+
+**All components are fully integrated with the stores:**
+
+- **OrdersList**: Uses orders store for listing, filtering, pagination, and cancellation
+- **OrderDetails**: Uses orders store for fetching details, status updates, and cancellation  
+- **OrderForm**: Uses orders store for order creation
+- **TrackOrder**: Uses orders store for public tracking
+- **Home**: Uses orders store for real-time statistics and app store for API status
+
+#### Usage Example:
+```javascript
+import { useOrdersStore } from '../stores/orders.js'
+
+export default {
+  setup() {
+    const ordersStore = useOrdersStore()
+    
+    // Access reactive state
+    const orders = computed(() => ordersStore.orders)
+    const loading = computed(() => ordersStore.loading.orders)
+    const error = computed(() => ordersStore.errors.orders)
+    
+    // Use store actions
+    const fetchOrders = () => ordersStore.fetchOrders()
+    const createOrder = (data) => ordersStore.createOrder(data)
+    
+    return { orders, loading, error, fetchOrders, createOrder }
+  }
+}
+```
+
+### Benefits of Store Architecture:
+
+✅ **Centralized State**: All order data managed in one place  
+✅ **Consistent Loading States**: Unified loading indicators across components  
+✅ **Error Handling**: Centralized error management with user-friendly messages  
+✅ **Data Synchronization**: Automatic updates across all components  
+✅ **Performance**: Efficient data fetching and caching  
+✅ **Real-time Stats**: Dashboard uses actual order data instead of mock data  
+✅ **Developer Experience**: Clean, predictable state management patterns
 
 ## 🎨 Styling & Design
 

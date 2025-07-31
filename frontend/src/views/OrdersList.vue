@@ -356,34 +356,28 @@
 <script>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import { useOrdersStore } from '../stores/orders.js'
 
 export default {
   name: 'OrdersList',
   setup() {
     const router = useRouter()
+    const ordersStore = useOrdersStore()
     
-    // State
-    const orders = ref([])
-    const loading = ref(false)
-    const error = ref('')
+    // Store-based state
+    const orders = computed(() => ordersStore.orders)
+    const loading = computed(() => ordersStore.loading.orders)
+    const error = computed(() => ordersStore.errors.orders)
     const cancellingOrders = ref([])
-    const pagination = ref({
-      currentPage: 1,
-      totalPages: 1,
-      totalOrders: 0,
-      ordersPerPage: 10,
-      hasNextPage: false,
-      hasPreviousPage: false
-    })
+    const pagination = computed(() => ordersStore.pagination)
     
-    // Filters
+    // Local reactive filters that sync with store
     const filters = ref({
-      status: '',
-      page: 1,
-      limit: 10,
-      sortBy: 'createdAt',
-      sortOrder: 'DESC'
+      status: ordersStore.filters.status,
+      page: ordersStore.pagination.currentPage,
+      limit: ordersStore.pagination.ordersPerPage,
+      sortBy: ordersStore.filters.sortBy,
+      sortOrder: ordersStore.filters.sortOrder
     })
     
     // Computed
@@ -427,62 +421,42 @@ export default {
       return pages
     })
     
-    // Methods
+    // Methods using store
     const fetchOrders = async () => {
-      loading.value = true
-      error.value = ''
-      
       try {
-        const params = new URLSearchParams()
-        if (filters.value.status) params.append('status', filters.value.status)
-        params.append('page', filters.value.page.toString())
-        params.append('limit', filters.value.limit.toString())
-        params.append('sortBy', filters.value.sortBy)
-        params.append('sortOrder', filters.value.sortOrder)
-        
-        const response = await axios.get(`/api/orders?${params.toString()}`)
-        
-        orders.value = response.data.orders
-        pagination.value = response.data.pagination
-        
+        await ordersStore.fetchOrders({
+          page: filters.value.page,
+          limit: filters.value.limit,
+          status: filters.value.status,
+          sortBy: filters.value.sortBy,
+          sortOrder: filters.value.sortOrder
+        })
       } catch (err) {
+        // Error is already handled by the store
         console.error('Error fetching orders:', err)
-        
-        // Enhanced error handling
-        if (err.response?.data?.message) {
-          error.value = err.response.data.message
-        } else if (err.response?.status === 500) {
-          error.value = 'Server error. Please try again later.'
-        } else if (err.response?.status === 404) {
-          error.value = 'Orders endpoint not found. Please check your API configuration.'
-        } else if (err.response?.status >= 400 && err.response?.status < 500) {
-          error.value = 'Bad request. Please check your filters and try again.'
-        } else if (err.request) {
-          error.value = 'Network error. Please check your internet connection and try again.'
-        } else {
-          error.value = 'An unexpected error occurred while loading orders.'
-        }
-        
-        orders.value = []
-        pagination.value = {
-          currentPage: 1,
-          totalPages: 1,
-          totalOrders: 0,
-          ordersPerPage: 10,
-          hasNextPage: false,
-          hasPreviousPage: false
-        }
-      } finally {
-        loading.value = false
       }
     }
     
-    const handleFilterChange = () => {
+    const handleFilterChange = async () => {
       filters.value.page = 1 // Reset to first page when filters change
-      fetchOrders()
+      
+      // Update store filters and fetch
+      await ordersStore.updateFilters({
+        status: filters.value.status,
+        sortBy: filters.value.sortBy,
+        sortOrder: filters.value.sortOrder
+      })
+      
+      await ordersStore.fetchOrders({
+        page: 1,
+        limit: filters.value.limit,
+        status: filters.value.status,
+        sortBy: filters.value.sortBy,
+        sortOrder: filters.value.sortOrder
+      })
     }
     
-    const resetFilters = () => {
+    const resetFilters = async () => {
       filters.value = {
         status: '',
         page: 1,
@@ -490,13 +464,15 @@ export default {
         sortBy: 'createdAt',
         sortOrder: 'DESC'
       }
-      fetchOrders()
+      
+      ordersStore.resetFilters()
+      await ordersStore.fetchOrders({ page: 1, limit: 10 })
     }
     
-    const goToPage = (page) => {
+    const goToPage = async (page) => {
       if (page >= 1 && page <= pagination.value.totalPages) {
         filters.value.page = page
-        fetchOrders()
+        await ordersStore.goToPage(page)
       }
     }
     
@@ -546,31 +522,16 @@ export default {
       cancellingOrders.value.push(order.id)
       
       try {
-        await axios.delete(`/api/orders/${order.id}`)
+        await ordersStore.cancelOrder(order.id)
         
         // Show success message (you could use a toast notification here)
         alert(`Order ${order.trackingNumber} has been cancelled successfully.`)
         
-        // Refresh the orders list
-        await fetchOrders()
-        
       } catch (err) {
         console.error('Error cancelling order:', err)
         
-        let errorMessage = 'Failed to cancel order. '
-        
-        if (err.response?.data?.message) {
-          errorMessage += err.response.data.message
-        } else if (err.response?.status === 400) {
-          errorMessage += 'Order cannot be cancelled in its current state.'
-        } else if (err.response?.status === 404) {
-          errorMessage += 'Order not found.'
-        } else if (err.request) {
-          errorMessage += 'Network error. Please check your connection.'
-        } else {
-          errorMessage += 'An unexpected error occurred.'
-        }
-        
+        // Error message is already handled by the store, but we can show it to user
+        const errorMessage = ordersStore.errors.deleting || 'Failed to cancel order. Please try again.'
         alert(errorMessage)
         
       } finally {
@@ -583,8 +544,8 @@ export default {
     watch(() => filters.value.page, fetchOrders)
     
     // Lifecycle
-    onMounted(() => {
-      fetchOrders()
+    onMounted(async () => {
+      await fetchOrders()
     })
     
     return {

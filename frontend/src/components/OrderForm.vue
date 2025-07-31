@@ -206,12 +206,13 @@
 <script>
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import { useOrdersStore } from '../stores/orders.js'
 
 export default {
   name: 'OrderForm',
   setup() {
     const router = useRouter()
+    const ordersStore = useOrdersStore()
     
     // Form state
     const form = ref({
@@ -221,9 +222,11 @@ export default {
       destination: ''
     })
     
-    // UI state
-    const loading = ref(false)
-    const apiError = ref('')
+    // Store-based state
+    const loading = computed(() => ordersStore.loading.creating)
+    const apiError = computed(() => ordersStore.errors.creating)
+    
+    // Local UI state
     const successMessage = ref('')
     const errors = ref({})
     
@@ -316,12 +319,12 @@ export default {
         return
       }
       
-      loading.value = true
-      apiError.value = ''
+      // Clear previous messages
+      ordersStore.clearError('creating')
       successMessage.value = ''
       
       try {
-        const response = await axios.post('/api/orders', {
+        const order = await ordersStore.createOrder({
           senderName: form.value.senderName.trim(),
           recipientName: form.value.recipientName.trim(),
           origin: form.value.origin.trim(),
@@ -329,7 +332,6 @@ export default {
         })
         
         // Success
-        const order = response.data.order
         successMessage.value = `Order created with tracking number: ${order.trackingNumber}`
         
         // Redirect after a short delay to show success message
@@ -339,21 +341,7 @@ export default {
         
       } catch (error) {
         console.error('Error creating order:', error)
-        
-        if (error.response?.data?.details) {
-          // Handle validation errors from backend
-          apiError.value = error.response.data.details.join(', ')
-        } else if (error.response?.data?.message) {
-          apiError.value = error.response.data.message
-        } else if (error.response?.status === 500) {
-          apiError.value = 'Server error. Please try again later.'
-        } else if (error.request) {
-          apiError.value = 'Network error. Please check your connection and try again.'
-        } else {
-          apiError.value = 'An unexpected error occurred. Please try again.'
-        }
-      } finally {
-        loading.value = false
+        // Error is already handled by the store, no need to set apiError
       }
     }
     
