@@ -1,6 +1,7 @@
 import sequelize from '../config/database.js';
 
 // Import models here as we create them
+import Order from './order.js';
 // import User from './User.js';
 // import Shipment from './Shipment.js';
 
@@ -20,4 +21,4 @@ export {
 };
 
 // Export individual models here as we create them
-// export { User, Shipment }; 
+export { Order }; 

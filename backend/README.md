@@ -230,16 +230,61 @@ The project includes a fully configured Sequelize CLI setup:
 - **Health checks**: Multiple endpoints for monitoring
 - **Graceful shutdown**: Proper SIGTERM/SIGINT handling
 
+## 📊 Database Models
+
+### Order Model
+
+The Order model represents shipment orders in the logistics system:
+
+**Attributes:**
+- `id` - Primary key (auto-increment)
+- `trackingNumber` - Unique tracking identifier (6-20 chars)
+- `senderName` - Name of the sender (2-100 chars)
+- `recipientName` - Name of the recipient (2-100 chars)
+- `origin` - Pickup location (2-200 chars)
+- `destination` - Delivery location (2-200 chars)
+- `status` - Order status enum: 'Pending', 'In Transit', 'Delivered', 'Canceled'
+- `createdAt` - Creation timestamp
+- `updatedAt` - Last update timestamp
+
+**Features:**
+- ✅ Status enum with default 'Pending'
+- ✅ Comprehensive validation rules
+- ✅ Unique tracking number constraint
+- ✅ Custom validation (origin ≠ destination)
+- ✅ Instance methods: `getFullRoute()`, `isPending()`, `isDelivered()`
+- ✅ Database indexes for performance
+- ✅ Underscored field names in database
+
+**Usage Example:**
+```javascript
+import { Order } from './src/models/index.js';
+
+// Create a new order
+const order = await Order.create({
+  trackingNumber: 'TRK12345678',
+  senderName: 'John Doe',
+  recipientName: 'Jane Smith',
+  origin: 'New York, NY',
+  destination: 'Los Angeles, CA'
+  // status defaults to 'Pending'
+});
+
+// Use instance methods
+console.log(order.getFullRoute()); // "New York, NY → Los Angeles, CA"
+console.log(order.isPending());    // true
+```
+
 ## 🏃‍♂️ Next Steps
 
 This backend foundation is ready for:
 
-- ✅ Database models (User, Shipment, etc.)
+- ✅ **Order Model** - Complete with validation and enum
 - ✅ Authentication middleware
 - ✅ Business logic routes
 - ✅ Data validation
 - ✅ Testing setup
-- ✅ Additional middleware
+- ✅ Additional models (User, Location, etc.)
 
 ## 🐛 Troubleshooting
 
