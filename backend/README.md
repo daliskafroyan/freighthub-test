@@ -12,11 +12,14 @@ backend/
 │   ├── middleware/
 │   │   └── index.js             # Custom middleware (CORS, error handling, logging)
 │   ├── models/
-│   │   └── index.js             # Sequelize models index
+│   │   ├── index.js             # Sequelize models index
+│   │   └── order.js             # Order model with validation and enum
 │   ├── routes/
 │   │   ├── index.js             # Main API routes
-│   │   └── health.js            # Health check routes
-│   ├── utils/                   # Utility functions (placeholder)
+│   │   ├── health.js            # Health check routes
+│   │   └── orders.js            # Order management API routes
+│   ├── utils/
+│   │   └── trackingGenerator.js # Tracking number generation utility
 │   └── server.js                # Main server entry point
 ├── config/
 │   └── config.cjs               # Sequelize CLI configuration (CommonJS)
@@ -109,33 +112,129 @@ pnpm db:seed:all
 ### Root Health Check
 - `GET /health` - Basic server health status
 
-### API Routes (`/api`)
+### API Info (`/api`)
 - `GET /api` - API information and available endpoints
+
+### Health Check Routes (`/api/health`)
 - `GET /api/health` - Basic health check
 - `GET /api/health/db` - Database connectivity check  
 - `GET /api/health/detailed` - Detailed system health check
 
-### Example Responses
+### Order Management Routes (`/api/orders`)
 
-**GET /health**
+#### Create Order
+- **`POST /api/orders`** - Create new order with auto-generated tracking number
+  - **Body**: `{ senderName, recipientName, origin, destination }`
+  - **Response**: Created order with tracking number
+  - **Validation**: All fields required, origin ≠ destination
+
+#### List Orders
+- **`GET /api/orders`** - Get all orders with pagination and filtering
+  - **Query Params**: `?status=Pending&page=1&limit=10&sortBy=createdAt&sortOrder=DESC`
+  - **Response**: Paginated list of orders with metadata
+
+#### Get Order Details
+- **`GET /api/orders/:id`** - Get specific order by ID
+  - **Response**: Complete order details with status methods
+
+#### Track Order
+- **`GET /api/orders/track/:tracking_number`** - Track order by tracking number
+  - **Response**: Enhanced tracking information with status history
+
+#### Update Order Status
+- **`PUT /api/orders/:id/status`** - Update order status
+  - **Body**: `{ status: "Pending|In Transit|Delivered|Canceled" }`
+  - **Business Rules**: Cannot change delivered/canceled orders
+
+#### Cancel Order
+- **`DELETE /api/orders/:id`** - Cancel order (delete)
+  - **Business Rules**: Only pending orders can be canceled
+
+### Example API Usage
+
+#### Create New Order
+```bash
+curl -X POST http://localhost:3000/api/orders \
+  -H "Content-Type: application/json" \
+  -d '{
+    "senderName": "John Doe",
+    "recipientName": "Jane Smith", 
+    "origin": "New York, NY",
+    "destination": "Los Angeles, CA"
+  }'
+```
+
+**Response:**
 ```json
 {
-  "status": "OK",
-  "message": "Logistics Tracking API is running",
-  "timestamp": "2025-07-31T15:17:19.389Z"
+  "message": "Order created successfully",
+  "order": {
+    "id": 1,
+    "trackingNumber": "TRK859243AB7D2F",
+    "senderName": "John Doe",
+    "recipientName": "Jane Smith",
+    "origin": "New York, NY",
+    "destination": "Los Angeles, CA",
+    "status": "Pending",
+    "route": "New York, NY → Los Angeles, CA",
+    "createdAt": "2025-07-31T16:30:00.000Z",
+    "updatedAt": "2025-07-31T16:30:00.000Z"
+  }
 }
 ```
 
-**GET /api/health/db**
+#### Track Order
+```bash
+curl http://localhost:3000/api/orders/track/TRK859243AB7D2F
+```
+
+**Response:**
 ```json
 {
-  "status": "OK",
-  "message": "Database connection is healthy",
-  "timestamp": "2025-07-31T15:17:19.459Z",
-  "database": {
-    "host": "localhost",
-    "port": 5432,
-    "name": "logistics_tracking"
+  "message": "Order tracking information",
+  "tracking": {
+    "trackingNumber": "TRK859243AB7D2F",
+    "status": "Pending",
+    "route": "New York, NY → Los Angeles, CA",
+    "senderName": "John Doe",
+    "recipientName": "Jane Smith",
+    "isPending": true,
+    "isDelivered": false,
+    "statusHistory": [
+      {
+        "status": "Pending",
+        "timestamp": "2025-07-31T16:30:00.000Z",
+        "description": "Order created and pending processing"
+      }
+    ]
+  }
+}
+```
+
+#### Update Order Status
+```bash
+curl -X PUT http://localhost:3000/api/orders/1/status \
+  -H "Content-Type: application/json" \
+  -d '{ "status": "In Transit" }'
+```
+
+#### List Orders with Pagination
+```bash
+curl "http://localhost:3000/api/orders?status=Pending&page=1&limit=5"
+```
+
+**Response:**
+```json
+{
+  "message": "Orders retrieved successfully",
+  "orders": [...],
+  "pagination": {
+    "currentPage": 1,
+    "totalPages": 3,
+    "totalOrders": 15,
+    "ordersPerPage": 5,
+    "hasNextPage": true,
+    "hasPreviousPage": false
   }
 }
 ```
@@ -274,6 +373,49 @@ const order = await Order.create({
 console.log(order.getFullRoute()); // "New York, NY → Los Angeles, CA"
 console.log(order.isPending());    // true
 ```
+
+## 🔧 Utilities
+
+### Tracking Number Generator
+
+The `trackingGenerator.js` utility provides functions for generating and validating unique tracking numbers:
+
+**Format**: `TRK` + 6-digit timestamp + 6-character hex string
+**Example**: `TRK859243AB7D2F`
+
+```javascript
+import { 
+  generateTrackingNumber, 
+  isValidTrackingNumberFormat,
+  analyzeTrackingNumber 
+} from './src/utils/trackingGenerator.js';
+
+// Generate unique tracking number
+const trackingNumber = generateTrackingNumber();
+console.log(trackingNumber); // "TRK859243AB7D2F"
+
+// Validate format
+const isValid = isValidTrackingNumberFormat(trackingNumber);
+console.log(isValid); // true
+
+// Analyze tracking number
+const analysis = analyzeTrackingNumber(trackingNumber);
+console.log(analysis); 
+// {
+//   valid: true,
+//   prefix: 'TRK',
+//   timestamp: '859243',
+//   randomPart: 'AB7D2F',
+//   fullNumber: 'TRK859243AB7D2F'
+// }
+```
+
+**Features:**
+- ✅ Unique tracking number generation
+- ✅ Format validation
+- ✅ Collision handling (retry mechanism)
+- ✅ Batch generation for multiple orders
+- ✅ Analysis and debugging utilities
 
 ## 🏃‍♂️ Next Steps
 
