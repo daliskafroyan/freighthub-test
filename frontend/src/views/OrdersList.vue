@@ -128,13 +128,22 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
           </svg>
         </div>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">No Orders Found</h3>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">📦 No Orders Found</h3>
         <p class="text-gray-600 mb-4">
-          {{ filters.status ? `No orders with status "${filters.status}"` : 'No orders have been created yet' }}
+          {{ filters.status ? `No orders found with status "${filters.status}". Try adjusting your filters or create a new order.` : 'No orders have been created yet. Get started by creating your first order!' }}
         </p>
-        <router-link to="/orders/create" class="btn-primary">
-          Create Your First Order
-        </router-link>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <router-link to="/orders/create" class="btn-primary">
+            🚚 Create Your First Order
+          </router-link>
+          <button 
+            v-if="filters.status"
+            @click="resetFilters"
+            class="btn-secondary"
+          >
+            Clear Filters
+          </button>
+        </div>
       </div>
     </div>
 
@@ -181,22 +190,30 @@
                 Created: {{ formatDate(order.createdAt) }}
               </div>
               
-              <!-- Actions -->
-              <div class="flex space-x-2 pt-2">
-                <button
-                  @click="viewOrder(order)"
-                  class="text-sm text-primary-600 hover:text-primary-800"
-                >
-                  View Details
-                </button>
-                <button
-                  v-if="order.status === 'Pending'"
-                  @click="updateOrderStatus(order)"
-                  class="text-sm text-yellow-600 hover:text-yellow-800"
-                >
-                  Update Status
-                </button>
-              </div>
+                             <!-- Actions -->
+               <div class="flex flex-wrap gap-2 pt-2">
+                 <button
+                   @click="viewOrder(order)"
+                   class="text-sm text-primary-600 hover:text-primary-800 font-medium"
+                 >
+                   View Details
+                 </button>
+                 <button
+                   v-if="order.status === 'Pending'"
+                   @click="updateOrderStatus(order)"
+                   class="text-sm text-yellow-600 hover:text-yellow-800 font-medium"
+                 >
+                   Update Status
+                 </button>
+                 <button
+                   v-if="order.status === 'Pending'"
+                   @click="cancelOrder(order)"
+                   class="text-sm text-red-600 hover:text-red-800 font-medium"
+                   :disabled="cancellingOrders.includes(order.id)"
+                 >
+                   {{ cancellingOrders.includes(order.id) ? 'Cancelling...' : 'Cancel Order' }}
+                 </button>
+               </div>
             </div>
           </div>
         </div>
@@ -255,21 +272,31 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {{ formatDate(order.createdAt) }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                  <button
-                    @click="viewOrder(order)"
-                    class="text-primary-600 hover:text-primary-900"
-                  >
-                    View
-                  </button>
-                  <button
-                    v-if="order.status === 'Pending'"
-                    @click="updateOrderStatus(order)"
-                    class="text-yellow-600 hover:text-yellow-900"
-                  >
-                    Update
-                  </button>
-                </td>
+                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                   <div class="flex justify-end space-x-2">
+                     <button
+                       @click="viewOrder(order)"
+                       class="text-primary-600 hover:text-primary-900 font-medium"
+                     >
+                       View
+                     </button>
+                     <button
+                       v-if="order.status === 'Pending'"
+                       @click="updateOrderStatus(order)"
+                       class="text-yellow-600 hover:text-yellow-900 font-medium"
+                     >
+                       Update
+                     </button>
+                     <button
+                       v-if="order.status === 'Pending'"
+                       @click="cancelOrder(order)"
+                       class="text-red-600 hover:text-red-900 font-medium"
+                       :disabled="cancellingOrders.includes(order.id)"
+                     >
+                       {{ cancellingOrders.includes(order.id) ? 'Cancelling...' : 'Cancel' }}
+                     </button>
+                   </div>
+                 </td>
               </tr>
             </tbody>
           </table>
@@ -340,6 +367,7 @@ export default {
     const orders = ref([])
     const loading = ref(false)
     const error = ref('')
+    const cancellingOrders = ref([])
     const pagination = ref({
       currentPage: 1,
       totalPages: 1,
@@ -419,14 +447,31 @@ export default {
         
       } catch (err) {
         console.error('Error fetching orders:', err)
+        
+        // Enhanced error handling
         if (err.response?.data?.message) {
           error.value = err.response.data.message
+        } else if (err.response?.status === 500) {
+          error.value = 'Server error. Please try again later.'
+        } else if (err.response?.status === 404) {
+          error.value = 'Orders endpoint not found. Please check your API configuration.'
+        } else if (err.response?.status >= 400 && err.response?.status < 500) {
+          error.value = 'Bad request. Please check your filters and try again.'
         } else if (err.request) {
-          error.value = 'Network error. Please check your connection.'
+          error.value = 'Network error. Please check your internet connection and try again.'
         } else {
-          error.value = 'An unexpected error occurred.'
+          error.value = 'An unexpected error occurred while loading orders.'
         }
+        
         orders.value = []
+        pagination.value = {
+          currentPage: 1,
+          totalPages: 1,
+          totalOrders: 0,
+          ordersPerPage: 10,
+          hasNextPage: false,
+          hasPreviousPage: false
+        }
       } finally {
         loading.value = false
       }
@@ -492,6 +537,48 @@ export default {
       router.push(`/orders/${order.id}/edit`)
     }
     
+    const cancelOrder = async (order) => {
+      if (!confirm(`Are you sure you want to cancel order ${order.trackingNumber}? This action cannot be undone.`)) {
+        return
+      }
+      
+      // Add order ID to cancelling list
+      cancellingOrders.value.push(order.id)
+      
+      try {
+        await axios.delete(`/api/orders/${order.id}`)
+        
+        // Show success message (you could use a toast notification here)
+        alert(`Order ${order.trackingNumber} has been cancelled successfully.`)
+        
+        // Refresh the orders list
+        await fetchOrders()
+        
+      } catch (err) {
+        console.error('Error cancelling order:', err)
+        
+        let errorMessage = 'Failed to cancel order. '
+        
+        if (err.response?.data?.message) {
+          errorMessage += err.response.data.message
+        } else if (err.response?.status === 400) {
+          errorMessage += 'Order cannot be cancelled in its current state.'
+        } else if (err.response?.status === 404) {
+          errorMessage += 'Order not found.'
+        } else if (err.request) {
+          errorMessage += 'Network error. Please check your connection.'
+        } else {
+          errorMessage += 'An unexpected error occurred.'
+        }
+        
+        alert(errorMessage)
+        
+      } finally {
+        // Remove order ID from cancelling list
+        cancellingOrders.value = cancellingOrders.value.filter(id => id !== order.id)
+      }
+    }
+    
     // Watchers
     watch(() => filters.value.page, fetchOrders)
     
@@ -504,6 +591,7 @@ export default {
       orders,
       loading,
       error,
+      cancellingOrders,
       pagination,
       filters,
       visiblePages,
@@ -514,7 +602,8 @@ export default {
       getStatusBadgeClass,
       formatDate,
       viewOrder,
-      updateOrderStatus
+      updateOrderStatus,
+      cancelOrder
     }
   }
 }

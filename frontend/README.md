@@ -106,6 +106,15 @@ A full-featured orders listing page with advanced functionality:
 - Current page highlighting
 - Results count display
 
+#### Action Buttons:
+- **View Details**: Navigate to order details page
+- **Update Status**: Navigate to status update form (for pending orders)
+- **Cancel Order**: Delete order with confirmation dialog (for pending orders only)
+  - Confirmation dialog prevents accidental cancellations
+  - Loading state shows "Cancelling..." during API call
+  - Comprehensive error handling with user-friendly messages
+  - Automatic list refresh after successful cancellation
+
 ### 🏠 Home Component (Dashboard)
 
 **Location**: `src/views/Home.vue`
@@ -270,8 +279,30 @@ try {
 - `GET /api/orders/:id` - Get order details
 - `GET /api/orders/track/:tracking_number` - Track order
 - `PUT /api/orders/:id/status` - Update order status
-- `DELETE /api/orders/:id` - Cancel order
+- `DELETE /api/orders/:id` - Cancel order (pending orders only)
 - `GET /api/health` - API health check
+
+#### Cancel Order Implementation:
+```javascript
+const cancelOrder = async (order) => {
+  if (!confirm(`Are you sure you want to cancel order ${order.trackingNumber}?`)) {
+    return
+  }
+  
+  cancellingOrders.value.push(order.id)
+  
+  try {
+    await axios.delete(`/api/orders/${order.id}`)
+    alert(`Order ${order.trackingNumber} has been cancelled successfully.`)
+    await fetchOrders() // Refresh list
+  } catch (error) {
+    // Comprehensive error handling
+    handleCancelError(error)
+  } finally {
+    cancellingOrders.value = cancellingOrders.value.filter(id => id !== order.id)
+  }
+}
+```
 
 ## 🚀 Development
 
