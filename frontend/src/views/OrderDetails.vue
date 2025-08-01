@@ -307,6 +307,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useOrdersStore } from '../stores/orders.js'
+import { useToast } from '../composables/useToast.js'
 
 export default {
   name: 'OrderDetails',
@@ -314,6 +315,7 @@ export default {
     const router = useRouter()
     const route = useRoute()
     const ordersStore = useOrdersStore()
+    const toast = useToast()
     
     // Store-based state
     const order = computed(() => ordersStore.currentOrder)
@@ -367,16 +369,17 @@ export default {
       
       try {
         await ordersStore.updateOrderStatus(order.value.id, newStatus.value)
-        newStatus.value = ''
         
-        showMessage(`Order status updated to ${order.value.status} successfully`, 'success')
+        // Show success toast
+        toast.orderUpdated(`Order status updated to ${order.value.status} successfully`)
+        newStatus.value = ''
         
       } catch (err) {
         console.error('Error updating order status:', err)
         
-        // Error message is already handled by the store
+        // Show error toast
         const errorMessage = ordersStore.errors.updating || 'Failed to update order status. Please try again.'
-        showMessage(errorMessage, 'error')
+        toast.error(errorMessage, { title: 'Update Failed' })
       }
     }
     
@@ -388,19 +391,20 @@ export default {
       try {
         await ordersStore.cancelOrder(order.value.id)
         
-        showMessage(`Order ${order.value.trackingNumber} has been cancelled successfully`, 'success')
+        // Show success toast
+        toast.orderCanceled(order.value.trackingNumber)
         
         // Redirect to orders list after a delay
         setTimeout(() => {
           router.push('/orders')
-        }, 2000)
+        }, 2500)
         
       } catch (err) {
         console.error('Error cancelling order:', err)
         
-        // Error message is already handled by the store
+        // Show error toast
         const errorMessage = ordersStore.errors.deleting || 'Failed to cancel order. Please try again.'
-        showMessage(errorMessage, 'error')
+        toast.error(errorMessage, { title: 'Cancellation Failed' })
       }
     }
     
@@ -445,9 +449,9 @@ export default {
     const copyTrackingNumber = async () => {
       try {
         await navigator.clipboard.writeText(order.value.trackingNumber)
-        showMessage('Tracking number copied to clipboard', 'success')
+        toast.success('Tracking number copied to clipboard', { title: 'Copied!' })
       } catch (err) {
-        showMessage('Failed to copy tracking number', 'error')
+        toast.error('Failed to copy tracking number', { title: 'Copy Failed' })
       }
     }
     

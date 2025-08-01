@@ -288,11 +288,13 @@
 <script>
 import { ref, computed } from 'vue'
 import { useOrdersStore } from '../stores/orders.js'
+import { useToast } from '../composables/useToast.js'
 
 export default {
   name: 'TrackOrder',
   setup() {
     const ordersStore = useOrdersStore()
+    const toast = useToast()
     
     // Local state
     const trackingNumber = ref('')
@@ -373,9 +375,9 @@ export default {
       
       try {
         await navigator.clipboard.writeText(order.value.trackingNumber)
-        showMessage('Tracking number copied to clipboard', 'success')
+        toast.success('Tracking number copied to clipboard', { title: 'Copied!' })
       } catch (err) {
-        showMessage('Failed to copy tracking number', 'error')
+        toast.error('Failed to copy tracking number', { title: 'Copy Failed' })
       }
     }
     

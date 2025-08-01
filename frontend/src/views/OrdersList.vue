@@ -357,12 +357,14 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useOrdersStore } from '../stores/orders.js'
+import { useToast } from '../composables/useToast.js'
 
 export default {
   name: 'OrdersList',
   setup() {
     const router = useRouter()
     const ordersStore = useOrdersStore()
+    const toast = useToast()
     
     // Store-based state
     const orders = computed(() => ordersStore.orders)
@@ -524,15 +526,15 @@ export default {
       try {
         await ordersStore.cancelOrder(order.id)
         
-        // Show success message (you could use a toast notification here)
-        alert(`Order ${order.trackingNumber} has been cancelled successfully.`)
+        // Show success toast notification
+        toast.orderCanceled(order.trackingNumber)
         
       } catch (err) {
         console.error('Error cancelling order:', err)
         
-        // Error message is already handled by the store, but we can show it to user
+        // Show error toast
         const errorMessage = ordersStore.errors.deleting || 'Failed to cancel order. Please try again.'
-        alert(errorMessage)
+        toast.error(errorMessage, { title: 'Cancellation Failed' })
         
       } finally {
         // Remove order ID from cancelling list

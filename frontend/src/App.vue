@@ -55,11 +55,35 @@
         </p>
       </div>
     </footer>
+
+    <!-- Global Toast Notifications -->
+    <Toast :toasts="toasts" @remove="removeToast" />
   </div>
 </template>
 
 <script>
-export default {
+import Toast from './components/Toast.vue'
+import { useToastState } from './composables/useToast.js'
+
+export default { 
   name: 'App',
+  components: {
+    Toast
+  },
+  setup() {
+    const { toasts } = useToastState()
+    
+    const removeToast = (id) => {
+      const index = toasts.value.findIndex(toast => toast.id === id)
+      if (index > -1) {
+        toasts.value.splice(index, 1)
+      }
+    }
+    
+    return {
+      toasts,
+      removeToast
+    }
+  }
 }
 </script> 
