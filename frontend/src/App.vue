@@ -23,13 +23,7 @@
             >
               📦 Orders
             </router-link>
-            <router-link 
-              to="/track" 
-              class="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              :class="{ 'text-primary-600 bg-primary-50': $route.name === 'TrackOrder' }"
-            >
-              🔍 Track
-            </router-link>
+            
             <router-link 
               to="/orders/create" 
               class="bg-primary-600 text-white hover:bg-primary-700 px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center"

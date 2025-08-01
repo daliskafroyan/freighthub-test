@@ -67,54 +67,12 @@
       </div>
     </div>
 
-    <!-- Delivery Rate -->
-    <div class="card">
-      <h3 class="text-lg font-medium text-gray-900 mb-4">📊 Delivery Performance</h3>
-      <div class="flex items-center justify-between">
-        <span class="text-sm text-gray-600">Delivery Rate</span>
-        <div class="flex items-center">
-          <div class="w-24 bg-gray-200 rounded-full h-2 mr-3">
-            <div 
-              :class="deliveryRate >= 80 ? 'bg-green-500' : deliveryRate >= 60 ? 'bg-yellow-500' : 'bg-red-500'"
-              class="h-2 rounded-full transition-all duration-300"
-              :style="{ width: deliveryRate + '%' }"
-            ></div>
-          </div>
-          <span 
-            :class="deliveryRate >= 80 ? 'text-green-600' : deliveryRate >= 60 ? 'text-yellow-600' : 'text-red-600'"
-            class="font-bold"
-          >
-            {{ deliveryRate }}%
-          </span>
-        </div>
-      </div>
-    </div>
 
-    <!-- API Status -->
-    <div class="card">
-      <h3 class="text-lg font-medium text-gray-900 mb-4">API Connection Status</h3>
-      <div class="flex items-center space-x-2">
-        <div 
-          :class="apiStatus.connected ? 'bg-green-500' : 'bg-red-500'" 
-          class="w-3 h-3 rounded-full"
-        ></div>
-        <span :class="apiStatus.connected ? 'text-green-700' : 'text-red-700'">
-          {{ apiStatus.message }}
-        </span>
-      </div>
-      <button 
-        @click="checkApiStatus" 
-        class="btn-primary mt-4"
-        :disabled="loading"
-      >
-        {{ loading ? 'Checking...' : 'Test Connection' }}
-      </button>
-    </div>
 
     <!-- Quick Actions -->
     <div class="card">
       <h3 class="text-lg font-medium text-gray-900 mb-4">🚀 Quick Actions</h3>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <router-link 
           to="/orders/create"
           class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors group"
@@ -145,20 +103,7 @@
           </div>
         </router-link>
 
-        <router-link 
-          to="/track"
-          class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors group"
-        >
-          <div class="flex items-center justify-center w-10 h-10 bg-primary-100 rounded-lg group-hover:bg-primary-200 transition-colors">
-            <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-          </div>
-          <div class="ml-4">
-            <h4 class="text-sm font-medium text-gray-900">Track Order</h4>
-            <p class="text-sm text-gray-500">Track by tracking number</p>
-          </div>
-        </router-link>
+        
       </div>
     </div>
   </div>
@@ -187,18 +132,7 @@ export default {
       }
     })
     
-    const apiStatus = computed(() => ({
-      connected: appStore.apiConnected,
-      message: appStore.apiMessage
-    }))
-    const loading = computed(() => appStore.loading || ordersStore.loading.orders)
-    const deliveryRate = computed(() => {
-      const total = stats.value.totalShipments
-      return total > 0 ? Math.round((stats.value.delivered / total) * 100) : 0
-    })
-
-    // Actions
-    const checkApiStatus = () => appStore.checkApiHealth()
+    const loading = computed(() => ordersStore.loading.orders)
 
     onMounted(async () => {
       // Initialize the app when component mounts
@@ -216,10 +150,7 @@ export default {
 
     return {
       stats,
-      apiStatus,
-      loading,
-      deliveryRate,
-      checkApiStatus
+      loading
     }
   }
 }

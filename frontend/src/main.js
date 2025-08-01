@@ -9,7 +9,6 @@ import Home from './views/Home.vue'
 import OrdersList from './views/OrdersList.vue'
 import OrderForm from './components/OrderForm.vue'
 import OrderDetails from './views/OrderDetails.vue'
-import TrackOrder from './views/TrackOrder.vue'
 
 // Create router
 const routes = [
@@ -17,7 +16,6 @@ const routes = [
   { path: '/orders', name: 'OrdersList', component: OrdersList },
   { path: '/orders/create', name: 'CreateOrder', component: OrderForm },
   { path: '/orders/:id', name: 'OrderDetails', component: OrderDetails, props: true },
-  { path: '/track', name: 'TrackOrder', component: TrackOrder },
 ]
 
 const router = createRouter({
