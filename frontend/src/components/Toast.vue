@@ -2,7 +2,7 @@
   <transition-group 
     tag="div" 
     name="toast" 
-    class="fixed top-4 right-4 z-50 space-y-2"
+    class="fixed top-4 right-4 z-50 space-y-2 min-w-80 max-w-md"
     enter-active-class="transition ease-out duration-300"
     enter-from-class="opacity-0 translate-x-full"
     enter-to-class="opacity-100 translate-x-0"
@@ -14,11 +14,11 @@
       v-for="toast in toasts"
       :key="toast.id"
       :class="[
-        'max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5',
-        'transform transition-all duration-300 ease-in-out'
+        'w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5',
+        'transform transition-all duration-300 ease-in-out relative'
       ]"
     >
-      <div class="flex-1 w-0 p-4">
+      <div class="flex-1 p-4">
         <div class="flex items-start">
           <div class="flex-shrink-0">
             <!-- Success Icon -->
@@ -66,7 +66,7 @@
             </svg>
           </div>
           
-          <div class="ml-3 w-0 flex-1 pt-0.5">
+          <div class="ml-3 flex-1">
             <p 
               v-if="toast.title" 
               :class="[
@@ -98,7 +98,7 @@
       <div class="flex border-l border-gray-200">
         <button
           @click="removeToast(toast.id)"
-          class="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-gray-600 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          class="border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-gray-600 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -109,8 +109,7 @@
       <!-- Progress bar for auto-dismiss -->
       <div 
         v-if="toast.autoDismiss && toast.duration > 0"
-        class="absolute bottom-0 left-0 h-1 bg-gray-200 rounded-b-lg overflow-hidden"
-        :style="{ width: '100%' }"
+        class="absolute bottom-0 left-0 h-1 bg-gray-200 rounded-b-lg overflow-hidden w-full"
       >
         <div 
           :class="[
