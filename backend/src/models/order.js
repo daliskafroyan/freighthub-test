@@ -8,8 +8,12 @@ class Order extends Model {
    * The `models/index` file will call this method automatically.
    */
   static associate(models) {
-    // define association here
-    // Example: Order.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+    // Order has many status history entries
+    Order.hasMany(models.OrderStatusHistory, {
+      foreignKey: 'orderId',
+      as: 'statusHistory',
+      onDelete: 'CASCADE'
+    });
   }
 
   // Instance methods can be added here

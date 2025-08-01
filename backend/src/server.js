@@ -6,6 +6,9 @@ import dotenv from 'dotenv';
 // Import database configuration
 import { sequelize, testConnection } from './config/database.js';
 
+// Import models
+import { initializeModels } from './models/index.js';
+
 // Import middleware
 import { 
   corsOptions, 
@@ -64,6 +67,9 @@ const startServer = async () => {
     if (!dbConnected) {
       console.warn('⚠️  Database connection failed, but server will start anyway');
     }
+    
+    // Initialize models and associations
+    initializeModels();
     
     // Sync database (in development)
     if (process.env.NODE_ENV === 'development') {

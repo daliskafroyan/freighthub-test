@@ -2,16 +2,23 @@ import sequelize from '../config/database.js';
 
 // Import models here as we create them
 import Order from './order.js';
+import OrderStatusHistory from './orderstatushistory.js';
 // import User from './User.js';
 // import Shipment from './Shipment.js';
 
 // Define model associations here
 const initializeModels = () => {
-  // Example of how to define associations when we have models:
-  // User.hasMany(Shipment, { foreignKey: 'userId', as: 'shipments' });
-  // Shipment.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+  // Set up associations
+  const models = { Order, OrderStatusHistory };
   
-  console.log('📋 Models initialized');
+  // Initialize associations for each model
+  Object.keys(models).forEach(modelName => {
+    if (models[modelName].associate) {
+      models[modelName].associate(models);
+    }
+  });
+  
+  console.log('📋 Models initialized with associations');
 };
 
 // Export models and initialization function
@@ -21,4 +28,4 @@ export {
 };
 
 // Export individual models here as we create them
-export { Order }; 
+export { Order, OrderStatusHistory }; 

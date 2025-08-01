@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Order } from '../models/index.js';
 import { generateTrackingNumber, isValidTrackingNumberFormat } from '../utils/trackingGenerator.js';
+import StatusTracker from '../services/statusTracker.js';
 
 const router = Router();
 
@@ -82,6 +83,19 @@ router.post('/', validateOrderCreation, async (req, res) => {
       destination: destination.trim()
       // status defaults to 'Pending'
     });
+    
+    // Record the initial status in history
+    try {
+      await StatusTracker.recordStatusChange(
+        order.id,
+        null, // No previous status for initial creation
+        order.status,
+        'Order created successfully'
+      );
+    } catch (statusError) {
+      console.warn('Failed to record initial status change:', statusError.message);
+      // Don't fail the order creation if status tracking fails
+    }
     
     res.status(201).json({
       message: 'Order created successfully',
@@ -205,6 +219,15 @@ router.get('/:id', async (req, res) => {
       });
     }
     
+    // Get status history for the order
+    let statusHistory = [];
+    try {
+      statusHistory = await StatusTracker.getStatusTimeline(order.id);
+    } catch (historyError) {
+      console.warn('Failed to fetch status history:', historyError.message);
+      // Continue without history if it fails
+    }
+    
     res.json({
       message: 'Order retrieved successfully',
       order: {
@@ -219,7 +242,8 @@ router.get('/:id', async (req, res) => {
         isPending: order.isPending(),
         isDelivered: order.isDelivered(),
         createdAt: order.createdAt,
-        updatedAt: order.updatedAt
+        updatedAt: order.updatedAt,
+        statusHistory: statusHistory
       }
     });
     
@@ -256,6 +280,15 @@ router.get('/track/:tracking_number', async (req, res) => {
       });
     }
     
+    // Get status history for tracking
+    let statusHistory = [];
+    try {
+      statusHistory = await StatusTracker.getStatusTimeline(order.id);
+    } catch (historyError) {
+      console.warn('Failed to fetch status history for tracking:', historyError.message);
+      // Continue without history if it fails
+    }
+    
     // Enhanced tracking response with more details
     res.json({
       message: 'Order tracking information',
@@ -271,14 +304,7 @@ router.get('/track/:tracking_number', async (req, res) => {
         isDelivered: order.isDelivered(),
         createdAt: order.createdAt,
         updatedAt: order.updatedAt,
-        statusHistory: [
-          {
-            status: 'Pending',
-            timestamp: order.createdAt,
-            description: 'Order created and pending processing'
-          }
-          // TODO: Add actual status history when we implement it
-        ]
+        statusHistory: statusHistory
       }
     });
     
@@ -323,18 +349,13 @@ router.put('/:id/status', async (req, res) => {
       });
     }
     
-    // Business rules for status updates
-    if (order.status === 'Delivered' && status !== 'Delivered') {
+    // Business rules for status updates using StatusTracker validation
+    if (!StatusTracker.isValidStatusTransition(order.status, status)) {
       return res.status(400).json({
-        error: 'Cannot change status',
-        message: 'Cannot change status of a delivered order'
-      });
-    }
-    
-    if (order.status === 'Canceled' && status !== 'Canceled') {
-      return res.status(400).json({
-        error: 'Cannot change status',
-        message: 'Cannot change status of a canceled order'
+        error: 'Invalid status transition',
+        message: `Cannot change status from ${order.status} to ${status}`,
+        currentStatus: order.status,
+        requestedStatus: status
       });
     }
     
@@ -342,6 +363,19 @@ router.put('/:id/status', async (req, res) => {
     const previousStatus = order.status;
     order.status = status;
     await order.save();
+    
+    // Record the status change in history
+    try {
+      await StatusTracker.recordStatusChange(
+        order.id,
+        previousStatus,
+        order.status,
+        `Status updated from ${previousStatus} to ${order.status}`
+      );
+    } catch (statusError) {
+      console.warn('Failed to record status change:', statusError.message);
+      // Don't fail the status update if history tracking fails
+    }
     
     res.json({
       message: 'Order status updated successfully',
@@ -374,7 +408,7 @@ router.put('/:id/status', async (req, res) => {
   }
 });
 
-// DELETE /api/orders/:id - Cancel order (only if status is 'Pending')
+// DELETE /api/orders/:id - Cancel order (mark as 'Canceled', don't delete)
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -404,20 +438,37 @@ router.delete('/:id', async (req, res) => {
       });
     }
     
-    // Store order info before deletion
-    const orderInfo = {
-      id: order.id,
-      trackingNumber: order.trackingNumber,
-      route: order.getFullRoute(),
-      status: order.status
-    };
+    // Store previous status for history tracking
+    const previousStatus = order.status;
     
-    // Delete the order
-    await order.destroy();
+    // Update status to 'Canceled' instead of deleting
+    order.status = 'Canceled';
+    await order.save();
+    
+    // Record the status change in history
+    try {
+      await StatusTracker.recordStatusChange(
+        order.id,
+        previousStatus,
+        'Canceled',
+        `Order canceled from ${previousStatus} status`
+      );
+    } catch (statusError) {
+      console.warn('Failed to record cancellation in history:', statusError.message);
+      // Don't fail the cancellation if history tracking fails
+    }
     
     res.json({
-      message: 'Order canceled and deleted successfully',
-      canceledOrder: orderInfo
+      message: 'Order canceled successfully',
+      order: {
+        id: order.id,
+        trackingNumber: order.trackingNumber,
+        route: order.getFullRoute(),
+        previousStatus,
+        currentStatus: order.status,
+        isCanceled: true,
+        updatedAt: order.updatedAt
+      }
     });
     
   } catch (error) {

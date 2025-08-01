@@ -350,26 +350,28 @@ export const useOrdersStore = defineStore('orders', {
       }
     },
     
-    // Cancel order (delete)
+    // Cancel order (mark as 'Canceled', don't delete)
     async cancelOrder(orderId) {
       this.setLoading('deleting', true)
       this.clearError('deleting')
       
       try {
-        await axios.delete(`/api/orders/${orderId}`)
+        const response = await axios.delete(`/api/orders/${orderId}`)
         
-        // Remove order from orders array
-        this.orders = this.orders.filter(order => order.id !== parseInt(orderId))
+        const canceledOrder = response.data.order
         
-        // Update pagination total
-        this.pagination.totalOrders = Math.max(0, this.pagination.totalOrders - 1)
-        
-        // Clear current order if it's the same
-        if (this.currentOrder && this.currentOrder.id === parseInt(orderId)) {
-          this.currentOrder = null
+        // Update order in orders array (mark as canceled, don't remove)
+        const index = this.orders.findIndex(order => order.id === parseInt(orderId))
+        if (index !== -1) {
+          this.orders[index] = { ...this.orders[index], ...canceledOrder }
         }
         
-        return true
+        // Update current order if it's the same
+        if (this.currentOrder && this.currentOrder.id === parseInt(orderId)) {
+          this.currentOrder = { ...this.currentOrder, ...canceledOrder }
+        }
+        
+        return canceledOrder
         
       } catch (error) {
         console.error('Error canceling order:', error)

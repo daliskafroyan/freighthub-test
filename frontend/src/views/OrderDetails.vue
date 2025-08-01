@@ -124,46 +124,76 @@
           <!-- Order Timeline -->
           <div class="card">
             <h2 class="text-lg font-medium text-gray-900 mb-4">📅 Order Timeline</h2>
-            <div class="space-y-4">
-              <!-- Created -->
-              <div class="flex items-start">
-                <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414L8 15.414l-4.707-4.707a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                </div>
-                <div class="ml-4 flex-1">
-                  <div class="font-medium text-gray-900">Order Created</div>
-                  <div class="text-sm text-gray-600">{{ formatDate(order.createdAt) }}</div>
-                  <div class="text-sm text-gray-500 mt-1">Order was successfully created and assigned tracking number</div>
-                </div>
-              </div>
-
-              <!-- Current Status -->
-              <div class="flex items-start">
+            <div v-if="order.statusHistory && order.statusHistory.length > 0" class="space-y-4">
+              <!-- Dynamic Timeline from Status History -->
+              <div 
+                v-for="(entry, index) in order.statusHistory" 
+                :key="entry.id"
+                class="flex items-start relative"
+              >
+                <!-- Timeline connector line -->
+                <div 
+                  v-if="index < order.statusHistory.length - 1"
+                  class="absolute left-4 top-8 w-px h-8 bg-gray-200"
+                ></div>
+                
                 <div class="flex-shrink-0">
                   <div :class="[
-                    'w-8 h-8 rounded-full flex items-center justify-center',
-                    order.status === 'Pending' ? 'bg-yellow-100 text-yellow-600' :
-                    order.status === 'In Transit' ? 'bg-blue-100 text-blue-600' :
-                    order.status === 'Delivered' ? 'bg-green-100 text-green-600' :
-                    'bg-red-100 text-red-600'
+                    'w-8 h-8 rounded-full flex items-center justify-center border-2 bg-white',
+                    entry.color === 'yellow' ? 'border-yellow-300 text-yellow-600' :
+                    entry.color === 'blue' ? 'border-blue-300 text-blue-600' :
+                    entry.color === 'green' ? 'border-green-300 text-green-600' :
+                    entry.color === 'red' ? 'border-red-300 text-red-600' :
+                    'border-gray-300 text-gray-600'
                   ]">
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <!-- Dynamic icon based on status -->
+                    <svg v-if="entry.icon === 'clock'" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V5z" clip-rule="evenodd" />
+                    </svg>
+                    <svg v-else-if="entry.icon === 'truck'" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">  
+                      <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
+                      <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707L16 7.586A1 1 0 0015.414 7H14z"/>
+                    </svg>
+                    <svg v-else-if="entry.icon === 'check-circle'" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    <svg v-else-if="entry.icon === 'x-circle'" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
+                    <svg v-else class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 3a7 7 0 100 14 7 7 0 000-14zm-3 7a3 3 0 106 0 3 3 0 00-6 0z" clip-rule="evenodd" />
                     </svg>
                   </div>
                 </div>
-                <div class="ml-4 flex-1">
-                  <div class="font-medium text-gray-900">{{ order.status }}</div>
-                  <div class="text-sm text-gray-600">{{ formatDate(order.updatedAt) }}</div>
-                  <div class="text-sm text-gray-500 mt-1">
-                    {{ getStatusDescription(order.status) }}
+                
+                <div class="ml-4 flex-1 pb-4">
+                  <div class="flex items-center justify-between">
+                    <div class="font-medium text-gray-900">{{ entry.status }}</div>
+                    <div v-if="entry.stepNumber" class="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
+                      Step {{ entry.stepNumber }}
+                    </div>
+                  </div>
+                  <div class="text-sm text-gray-600 mt-1">{{ formatDate(entry.timestamp) }}</div>
+                  <div class="text-sm text-gray-500 mt-1">{{ entry.description }}</div>
+                  <div v-if="entry.notes" class="text-xs text-gray-400 mt-2 italic">
+                    {{ entry.notes }}
                   </div>
                 </div>
               </div>
+            </div>
+            
+            <!-- Loading state -->
+            <div v-else-if="loading" class="flex items-center justify-center py-8">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+              <span class="ml-3 text-gray-600">Loading timeline...</span>
+            </div>
+            
+            <!-- Empty state -->
+            <div v-else class="text-center py-8 text-gray-500">
+              <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <p>No timeline data available</p>
             </div>
           </div>
         </div>
@@ -218,7 +248,7 @@
             <h3 class="text-lg font-medium text-red-900 mb-4">⚠️ Danger Zone</h3>
             <div class="space-y-3">
               <p class="text-sm text-red-700">
-                Cancel this order permanently. This action cannot be undone.
+                Cancel this pending order. The order will be marked as canceled and no further changes will be possible.
               </p>
               <button
                 @click="cancelOrder"
@@ -370,6 +400,9 @@ export default {
       try {
         await ordersStore.updateOrderStatus(order.value.id, newStatus.value)
         
+        // Refresh the order data to get the updated timeline
+        await fetchOrder()
+        
         // Show success toast
         toast.orderUpdated(`Order status updated to ${order.value.status} successfully`)
         newStatus.value = ''
@@ -384,20 +417,18 @@ export default {
     }
     
     const cancelOrder = async () => {
-      if (!confirm(`Are you sure you want to cancel order ${order.value.trackingNumber}? This action cannot be undone.`)) {
+      if (!confirm(`Are you sure you want to cancel order ${order.value.trackingNumber}? The order will be marked as canceled and no further changes will be possible.`)) {
         return
       }
       
       try {
         await ordersStore.cancelOrder(order.value.id)
         
+        // Refresh the order data to get the updated status and timeline
+        await fetchOrder()
+        
         // Show success toast
         toast.orderCanceled(order.value.trackingNumber)
-        
-        // Redirect to orders list after a delay
-        setTimeout(() => {
-          router.push('/orders')
-        }, 2500)
         
       } catch (err) {
         console.error('Error cancelling order:', err)

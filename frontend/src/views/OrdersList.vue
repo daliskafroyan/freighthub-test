@@ -19,71 +19,77 @@
 
     <!-- Filters -->
     <div class="card">
-      <div class="flex flex-wrap items-center gap-4">
-        <!-- Status Filter -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-          <select 
-            v-model="filters.status" 
-            @change="handleFilterChange"
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
-            <option value="">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="In Transit">In Transit</option>
-            <option value="Delivered">Delivered</option>
-            <option value="Canceled">Canceled</option>
-          </select>
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <!-- Filter Controls Group -->
+        <div class="flex flex-wrap items-end gap-4">
+          <!-- Status Filter -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select 
+              v-model="filters.status" 
+              @change="handleFilterChange"
+              class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            >
+              <option value="">All Statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="In Transit">In Transit</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Canceled">Canceled</option>
+            </select>
+          </div>
+
+          <!-- Items per page -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Per Page</label>
+            <select 
+              v-model="filters.limit" 
+              @change="handleFilterChange"
+              class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            >
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+
+          <!-- Sort options -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+            <select 
+              v-model="filters.sortBy" 
+              @change="handleFilterChange"
+              class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            >
+              <option value="createdAt">Created Date</option>
+              <option value="updatedAt">Updated Date</option>
+              <option value="status">Status</option>
+              <option value="trackingNumber">Tracking Number</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Order</label>
+            <select 
+              v-model="filters.sortOrder" 
+              @change="handleFilterChange"
+              class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            >
+              <option value="DESC">Newest First</option>
+              <option value="ASC">Oldest First</option>
+            </select>
+          </div>
         </div>
 
-        <!-- Items per page -->
+        <!-- Reset filters button - pushed to the right -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Per Page</label>
-          <select 
-            v-model="filters.limit" 
-            @change="handleFilterChange"
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
-            <option value="5">5</option>
-            <option value="10">10</option>
-            <option value="25">25</option>
-            <option value="50">50</option>
-          </select>
-        </div>
-
-        <!-- Sort options -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
-          <select 
-            v-model="filters.sortBy" 
-            @change="handleFilterChange"
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
-            <option value="createdAt">Created Date</option>
-            <option value="updatedAt">Updated Date</option>
-            <option value="status">Status</option>
-            <option value="trackingNumber">Tracking Number</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Order</label>
-          <select 
-            v-model="filters.sortOrder" 
-            @change="handleFilterChange"
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
-            <option value="DESC">Newest First</option>
-            <option value="ASC">Oldest First</option>
-          </select>
-        </div>
-
-        <!-- Reset filters -->
-        <div class="flex items-end">
           <button
             @click="resetFilters"
-            class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
           >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
             Reset Filters
           </button>
         </div>
@@ -209,14 +215,14 @@
                  >
                    Update Status
                  </button>
-                 <button
-                   v-if="order.status === 'Pending'"
-                   @click="cancelOrder(order)"
-                   class="text-sm text-red-600 hover:text-red-800 font-medium"
-                   :disabled="cancellingOrders.includes(order.id)"
-                 >
-                   {{ cancellingOrders.includes(order.id) ? 'Cancelling...' : 'Cancel Order' }}
-                 </button>
+                                 <button
+                  v-if="order.status === 'Pending'"
+                  @click="cancelOrder(order)"
+                  class="text-sm text-red-600 hover:text-red-800 font-medium"
+                  :disabled="cancellingOrders.includes(order.id)"
+                >
+                  {{ cancellingOrders.includes(order.id) ? 'Cancelling...' : 'Cancel Order' }}
+                </button>
                </div>
             </div>
           </div>
@@ -291,14 +297,14 @@
                      >
                        Update
                      </button>
-                     <button
-                       v-if="order.status === 'Pending'"
-                       @click="cancelOrder(order)"
-                       class="text-red-600 hover:text-red-900 font-medium"
-                       :disabled="cancellingOrders.includes(order.id)"
-                     >
-                       {{ cancellingOrders.includes(order.id) ? 'Cancelling...' : 'Cancel' }}
-                     </button>
+                                         <button
+                      v-if="order.status === 'Pending'"
+                      @click="cancelOrder(order)"
+                      class="text-red-600 hover:text-red-900 font-medium"
+                      :disabled="cancellingOrders.includes(order.id)"
+                    >
+                      {{ cancellingOrders.includes(order.id) ? 'Cancelling...' : 'Cancel' }}
+                    </button>
                    </div>
                  </td>
               </tr>
@@ -359,7 +365,7 @@
 
 <script>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useOrdersStore } from '../stores/orders.js'
 import { useToast } from '../composables/useToast.js'
 
@@ -367,6 +373,7 @@ export default {
   name: 'OrdersList',
   setup() {
     const router = useRouter()
+    const route = useRoute()
     const ordersStore = useOrdersStore()
     const toast = useToast()
     
@@ -377,13 +384,13 @@ export default {
     const cancellingOrders = ref([])
     const pagination = computed(() => ordersStore.pagination)
     
-    // Local reactive filters that sync with store
+    // Initialize filters from URL query parameters
     const filters = ref({
-      status: ordersStore.filters.status,
-      page: ordersStore.pagination.currentPage,
-      limit: ordersStore.pagination.ordersPerPage,
-      sortBy: ordersStore.filters.sortBy,
-      sortOrder: ordersStore.filters.sortOrder
+      status: route.query.status || '',
+      page: parseInt(route.query.page) || 1,
+      limit: parseInt(route.query.limit) || 10,
+      sortBy: route.query.sortBy || 'createdAt',
+      sortOrder: route.query.sortOrder || 'DESC'
     })
     
     // Computed
@@ -443,8 +450,26 @@ export default {
       }
     }
     
+    // Helper function to update URL with current filters
+    const updateURL = () => {
+      const query = {}
+      
+      // Only add non-default values to URL
+      if (filters.value.status) query.status = filters.value.status
+      if (filters.value.page > 1) query.page = filters.value.page
+      if (filters.value.limit !== 10) query.limit = filters.value.limit
+      if (filters.value.sortBy !== 'createdAt') query.sortBy = filters.value.sortBy
+      if (filters.value.sortOrder !== 'DESC') query.sortOrder = filters.value.sortOrder
+      
+      // Update URL without triggering navigation
+      router.replace({ query })
+    }
+    
     const handleFilterChange = async () => {
       filters.value.page = 1 // Reset to first page when filters change
+      
+      // Update URL
+      updateURL()
       
       // Update store filters and fetch
       await ordersStore.updateFilters({
@@ -471,6 +496,9 @@ export default {
         sortOrder: 'DESC'
       }
       
+      // Update URL (will clear all query params since all are default values)
+      updateURL()
+      
       ordersStore.resetFilters()
       await ordersStore.fetchOrders({ page: 1, limit: 10 })
     }
@@ -478,6 +506,10 @@ export default {
     const goToPage = async (page) => {
       if (page >= 1 && page <= pagination.value.totalPages) {
         filters.value.page = page
+        
+        // Update URL
+        updateURL()
+        
         await ordersStore.goToPage(page)
       }
     }
@@ -520,7 +552,7 @@ export default {
     }
     
     const cancelOrder = async (order) => {
-      if (!confirm(`Are you sure you want to cancel order ${order.trackingNumber}? This action cannot be undone.`)) {
+      if (!confirm(`Are you sure you want to cancel order ${order.trackingNumber}? The order will be marked as canceled and no further changes will be possible.`)) {
         return
       }
       
@@ -549,7 +581,20 @@ export default {
     // Watchers
     watch(() => filters.value.page, fetchOrders)
     
-    // Lifecycle
+    // Watch for route changes (browser back/forward)
+    watch(() => route.query, (newQuery) => {
+      filters.value = {
+        status: newQuery.status || '',
+        page: parseInt(newQuery.page) || 1,
+        limit: parseInt(newQuery.limit) || 10,
+        sortBy: newQuery.sortBy || 'createdAt',
+        sortOrder: newQuery.sortOrder || 'DESC'
+      }
+      
+      // Fetch orders with new filters
+      fetchOrders()
+    }, { deep: true })
+
     onMounted(async () => {
       await fetchOrders()
     })
