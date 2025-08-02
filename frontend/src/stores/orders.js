@@ -31,6 +31,7 @@ export const useOrdersStore = defineStore('orders', {
     },
     filters: {
       status: '',
+      trackingNumber: '',
       sortBy: 'createdAt',
       sortOrder: 'DESC'
     },
@@ -116,6 +117,7 @@ export const useOrdersStore = defineStore('orders', {
     resetFilters() {
       this.filters = {
         status: '',
+        trackingNumber: '',
         sortBy: 'createdAt',
         sortOrder: 'DESC'
       }
@@ -126,6 +128,7 @@ export const useOrdersStore = defineStore('orders', {
         page = this.pagination.currentPage,
         limit = this.pagination.ordersPerPage,
         status = this.filters.status,
+        trackingNumber = this.filters.trackingNumber,
         sortBy = this.filters.sortBy,
         sortOrder = this.filters.sortOrder
       } = options
@@ -143,6 +146,10 @@ export const useOrdersStore = defineStore('orders', {
 
         if (status) {
           params.status = status
+        }
+
+        if (trackingNumber) {
+          params.trackingNumber = trackingNumber
         }
 
         const response = await axios.get('/api/orders', { params })

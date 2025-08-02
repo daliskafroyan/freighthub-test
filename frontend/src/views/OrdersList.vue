@@ -17,6 +17,17 @@
       <div class="flex flex-wrap items-end justify-between gap-4">
         <div class="flex flex-wrap items-end gap-4">
           <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tracking Number</label>
+            <input
+              v-model="filters.trackingNumber"
+              @input="handleTrackingNumberInput"
+              type="text"
+              placeholder="Search tracking number..."
+              class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-48"
+            />
+          </div>
+
+          <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
             <select 
               v-model="filters.status" 
@@ -306,11 +317,14 @@ export default {
     
     const filters = ref({
       status: route.query.status || '',
+      trackingNumber: route.query.trackingNumber || '',
       page: parseInt(route.query.page) || 1,
       limit: parseInt(route.query.limit) || 10,
       sortBy: route.query.sortBy || 'createdAt',
       sortOrder: route.query.sortOrder || 'DESC'
     })
+    
+    const trackingNumberTimeout = ref(null)
     
     const showStatusModal = ref(false)
     const selectedOrder = ref(null)
@@ -353,6 +367,7 @@ export default {
       const query = {}
       
       if (filters.value.status) query.status = filters.value.status
+      if (filters.value.trackingNumber) query.trackingNumber = filters.value.trackingNumber
       if (filters.value.page > 1) query.page = filters.value.page
       if (filters.value.limit !== 10) query.limit = filters.value.limit
       if (filters.value.sortBy !== 'createdAt') query.sortBy = filters.value.sortBy
@@ -361,13 +376,24 @@ export default {
       router.replace({ query })
     }
     
+    const handleTrackingNumberInput = () => {
+      if (trackingNumberTimeout.value) {
+        clearTimeout(trackingNumberTimeout.value)
+      }
+      
+      trackingNumberTimeout.value = setTimeout(() => {
+        handleFilterChange()
+      }, 500)
+    }
+    
     const handleFilterChange = async () => {
       filters.value.page = 1
       
       updateURL()
       
-      await ordersStore.updateFilters({
+      ordersStore.updateFilters({
         status: filters.value.status,
+        trackingNumber: filters.value.trackingNumber,
         sortBy: filters.value.sortBy,
         sortOrder: filters.value.sortOrder
       })
@@ -376,6 +402,7 @@ export default {
         page: 1,
         limit: filters.value.limit,
         status: filters.value.status,
+        trackingNumber: filters.value.trackingNumber,
         sortBy: filters.value.sortBy,
         sortOrder: filters.value.sortOrder
       })
@@ -384,6 +411,7 @@ export default {
     const resetFilters = async () => {
       filters.value = {
         status: '',
+        trackingNumber: '',
         page: 1,
         limit: 10,
         sortBy: 'createdAt',
@@ -498,6 +526,7 @@ export default {
           page: filters.value.page,
           limit: filters.value.limit,
           status: filters.value.status,
+          trackingNumber: filters.value.trackingNumber,
           sortBy: filters.value.sortBy,
           sortOrder: filters.value.sortOrder
         })
@@ -509,6 +538,7 @@ export default {
     watch(() => route.query, (newQuery) => {
       filters.value = {
         status: newQuery.status || '',
+        trackingNumber: newQuery.trackingNumber || '',
         page: parseInt(newQuery.page) || 1,
         limit: parseInt(newQuery.limit) || 10,
         sortBy: newQuery.sortBy || 'createdAt',
@@ -535,6 +565,7 @@ export default {
       newStatus,
       updatingStatus,
       handleFilterChange,
+      handleTrackingNumberInput,
       resetFilters,
       goToPage,
       getStatusBadgeClass,

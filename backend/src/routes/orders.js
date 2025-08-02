@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { Order } from '../models/index.js';
+import { Op } from 'sequelize';
 import { generateTrackingNumber, isValidTrackingNumberFormat } from '../utils/trackingGenerator.js';
 import StatusTracker from '../services/statusTracker.js';
 
@@ -127,12 +128,18 @@ router.get('/', async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
     const status = req.query.status;
+    const trackingNumber = req.query.trackingNumber;
     const sortBy = req.query.sortBy || 'createdAt';
     const sortOrder = req.query.sortOrder || 'DESC';
     
     const whereClause = {};
     if (status) {
       whereClause.status = status;
+    }
+    if (trackingNumber && trackingNumber.trim()) {
+      whereClause.trackingNumber = {
+        [Op.iLike]: `%${trackingNumber.trim()}%`
+      };
     }
     
     const { count, rows: orders } = await Order.findAndCountAll({
