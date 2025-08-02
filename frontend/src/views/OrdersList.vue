@@ -1,5 +1,18 @@
 <template>
   <div class="space-y-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Orders</h1>
+        <p class="text-gray-600">Manage and track your shipping orders</p>
+      </div>
+      <router-link to="/orders/create" class="btn-primary flex items-center">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        Create Order
+      </router-link>
+    </div>
+
     <div class="card">
       <div class="flex flex-wrap items-end justify-between gap-4">
         <div class="flex flex-wrap items-end gap-4">
@@ -111,7 +124,7 @@
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Route</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -130,32 +143,49 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {{ formatDate(order.createdAt) }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div class="flex space-x-2">
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <div class="flex items-center justify-center space-x-1">
                     <button
                       @click="viewOrder(order)"
-                      class="text-sm text-primary-600 hover:text-primary-800 font-medium flex items-center"
+                      class="p-2 text-gray-400 hover:text-primary-600 transition-colors relative group"
+                      title="View & Track Order"
                     >
-                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                       </svg>
-                      View & Track
+                      <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                        View & Track
+                      </div>
                     </button>
+                    
                     <button
                       v-if="order.status === 'Pending'"
-                      @click="updateOrderStatus(order)"
-                      class="text-sm text-yellow-600 hover:text-yellow-800 font-medium"
+                      @click="showStatusUpdateModal(order)"
+                      class="p-2 text-gray-400 hover:text-yellow-600 transition-colors relative group"
+                      title="Update Status"
                     >
-                      Update Status
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                      </svg>
+                      <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                        Update Status
+                      </div>
                     </button>
+                    
                     <button
                       v-if="order.status === 'Pending'"
                       @click="cancelOrder(order)"
-                      class="text-sm text-red-600 hover:text-red-800 font-medium"
                       :disabled="cancellingOrders.includes(order.id)"
+                      class="p-2 text-gray-400 hover:text-red-600 transition-colors relative group disabled:opacity-50 disabled:cursor-not-allowed"
+                      :title="cancellingOrders.includes(order.id) ? 'Cancelling...' : 'Cancel Order'"
                     >
-                      {{ cancellingOrders.includes(order.id) ? 'Cancelling...' : 'Cancel Order' }}
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                      <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                        {{ cancellingOrders.includes(order.id) ? 'Cancelling...' : 'Cancel Order' }}
+                      </div>
                     </button>
                   </div>
                 </td>
@@ -194,6 +224,63 @@
         </div>
       </div>
     </div>
+
+    <!-- Status Update Modal -->
+    <div v-if="showStatusModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 top-[-25px]">
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium text-gray-900">Update Order Status</h3>
+            <button
+              @click="closeStatusModal"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="mb-4">
+            <p class="text-sm text-gray-600 mb-2">
+              Order: <span class="font-medium">{{ selectedOrder?.trackingNumber }}</span>
+            </p>
+            <p class="text-sm text-gray-600">
+              Current Status: <span :class="getStatusBadgeClass(selectedOrder?.status)">{{ selectedOrder?.status }}</span>
+            </p>
+          </div>
+          
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">New Status</label>
+            <select
+              v-model="newStatus"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            >
+              <option value="">Select new status</option>
+              <option value="In Transit">In Transit</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Canceled">Canceled</option>
+            </select>
+          </div>
+          
+          <div class="flex items-center justify-end space-x-3">
+            <button
+              @click="closeStatusModal"
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              @click="updateOrderStatus"
+              :disabled="!newStatus || updatingStatus"
+              class="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ updatingStatus ? 'Updating...' : 'Update Status' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -224,6 +311,11 @@ export default {
       sortBy: route.query.sortBy || 'createdAt',
       sortOrder: route.query.sortOrder || 'DESC'
     })
+    
+    const showStatusModal = ref(false)
+    const selectedOrder = ref(null)
+    const newStatus = ref('')
+    const updatingStatus = ref(false)
     
     const visiblePages = computed(() => {
       const totalPages = pagination.value.totalPages
@@ -345,8 +437,36 @@ export default {
       router.push(`/orders/${order.id}`)
     }
     
-    const updateOrderStatus = (order) => {
-      router.push(`/orders/${order.id}`)
+    const showStatusUpdateModal = (order) => {
+      selectedOrder.value = order
+      newStatus.value = ''
+      showStatusModal.value = true
+    }
+    
+    const closeStatusModal = () => {
+      showStatusModal.value = false
+      selectedOrder.value = null
+      newStatus.value = ''
+      updatingStatus.value = false
+    }
+    
+    const updateOrderStatus = async () => {
+      if (!newStatus.value || !selectedOrder.value) return
+      
+      updatingStatus.value = true
+      
+      try {
+        await ordersStore.updateOrderStatus(selectedOrder.value.id, newStatus.value)
+        toast.success(`Order status updated to ${newStatus.value}`)
+        closeStatusModal()
+        await fetchOrders()
+      } catch (err) {
+        console.error('Error updating order status:', err)
+        const errorMessage = ordersStore.errors.updating || 'Failed to update order status'
+        toast.error(errorMessage)
+      } finally {
+        updatingStatus.value = false
+      }
     }
     
     const cancelOrder = async (order) => {
@@ -410,12 +530,18 @@ export default {
       filters,
       visiblePages,
       cancellingOrders,
+      showStatusModal,
+      selectedOrder,
+      newStatus,
+      updatingStatus,
       handleFilterChange,
       resetFilters,
       goToPage,
       getStatusBadgeClass,
       formatDate,
       viewOrder,
+      showStatusUpdateModal,
+      closeStatusModal,
       updateOrderStatus,
       cancelOrder,
       fetchOrders
