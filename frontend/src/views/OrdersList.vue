@@ -1,28 +1,8 @@
 <template>
   <div class="space-y-6">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900">📦 Orders Management</h1>
-        <p class="mt-2 text-gray-600">View and manage all shipping orders</p>
-      </div>
-      <router-link 
-        to="/orders/create"
-        class="btn-primary flex items-center"
-      >
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-        </svg>
-        Create New Order
-      </router-link>
-    </div>
-
-    <!-- Filters -->
     <div class="card">
       <div class="flex flex-wrap items-end justify-between gap-4">
-        <!-- Filter Controls Group -->
         <div class="flex flex-wrap items-end gap-4">
-          <!-- Status Filter -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
             <select 
@@ -38,7 +18,6 @@
             </select>
           </div>
 
-          <!-- Items per page -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Per Page</label>
             <select 
@@ -53,7 +32,6 @@
             </select>
           </div>
 
-          <!-- Sort options -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
             <select 
@@ -81,7 +59,6 @@
           </div>
         </div>
 
-        <!-- Reset filters button - pushed to the right -->
         <div>
           <button
             @click="resetFilters"
@@ -96,183 +73,54 @@
       </div>
     </div>
 
-    <!-- Loading State -->
     <div v-if="loading" class="card text-center py-12">
       <div class="inline-flex items-center">
-        <svg class="animate-spin -ml-1 mr-3 h-6 w-6 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+        <span class="ml-3 text-gray-600">Loading orders...</span>
+      </div>
+    </div>
+
+    <div v-else-if="error" class="card text-center py-12">
+      <div class="text-red-600">
+        <svg class="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
-        <span class="text-lg text-gray-900">Loading orders...</span>
+        <p class="text-lg font-medium">{{ error }}</p>
+        <button @click="fetchOrders" class="mt-4 btn-primary">Try Again</button>
       </div>
     </div>
 
-    <!-- Error State -->
-    <div v-else-if="error" class="card">
-      <div class="text-center py-12">
-        <div class="mx-auto h-12 w-12 text-red-400 mb-4">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-        </div>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">Error Loading Orders</h3>
-        <p class="text-gray-600 mb-4">{{ error }}</p>
-        <button 
-          @click="fetchOrders"
-          class="btn-primary"
-        >
-          Try Again
-        </button>
+    <div v-else-if="orders.length === 0" class="card text-center py-12">
+      <div class="text-gray-500">
+        <svg class="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+        </svg>
+        <p class="text-lg font-medium">No orders found</p>
+        <p class="text-sm">Create your first order to get started</p>
+        <router-link to="/orders/create" class="mt-4 btn-primary inline-block">Create Order</router-link>
       </div>
     </div>
 
-    <!-- Empty State -->
-    <div v-else-if="orders.length === 0" class="card">
-      <div class="text-center py-12">
-        <div class="mx-auto h-12 w-12 text-gray-400 mb-4">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-          </svg>
-        </div>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">📦 No Orders Found</h3>
-        <p class="text-gray-600 mb-4">
-          {{ filters.status ? `No orders found with status "${filters.status}". Try adjusting your filters or create a new order.` : 'No orders have been created yet. Get started by creating your first order!' }}
-        </p>
-        <div class="flex flex-col sm:flex-row gap-3 justify-center">
-          <router-link to="/orders/create" class="btn-primary">
-            🚚 Create Your First Order
-          </router-link>
-          <button 
-            v-if="filters.status"
-            @click="resetFilters"
-            class="btn-secondary"
-          >
-            Clear Filters
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Orders List -->
-    <div v-else class="space-y-4">
-      <!-- Orders Table/Cards -->
+    <div v-else class="space-y-6">
       <div class="card overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-          <h3 class="text-lg font-medium text-gray-900">
-            Orders ({{ pagination.totalOrders }} total)
-          </h3>
-        </div>
-        
-        <!-- Mobile: Card Layout -->
-        <div class="block md:hidden">
-          <div v-for="order in orders" :key="order.id" class="border-b border-gray-200 last:border-b-0">
-            <div class="p-4 space-y-3">
-              <!-- Header -->
-              <div class="flex items-center justify-between">
-                <div class="font-medium text-gray-900">
-                  {{ order.trackingNumber }}
-                </div>
-                <div :class="getStatusBadgeClass(order.status)">
-                  {{ order.status }}
-                </div>
-              </div>
-              
-              <!-- Route -->
-              <div class="text-sm text-gray-600">
-                <div class="flex items-center">
-                  <span class="font-medium">Route:</span>
-                  <span class="ml-2">{{ order.route }}</span>
-                </div>
-              </div>
-              
-              <!-- Sender/Recipient -->
-              <div class="text-sm text-gray-600 space-y-1">
-                <div><span class="font-medium">From:</span> {{ order.senderName }}</div>
-                <div><span class="font-medium">To:</span> {{ order.recipientName }}</div>
-              </div>
-              
-              <!-- Date -->
-              <div class="text-xs text-gray-500">
-                Created: {{ formatDate(order.createdAt) }}
-              </div>
-              
-                             <!-- Actions -->
-               <div class="flex flex-wrap gap-2 pt-2">
-                                 <button
-                  @click="viewOrder(order)"
-                  class="text-sm text-primary-600 hover:text-primary-800 font-medium flex items-center"
-                >
-                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                  </svg>
-                  View & Track
-                </button>
-                 <button
-                   v-if="order.status === 'Pending'"
-                   @click="updateOrderStatus(order)"
-                   class="text-sm text-yellow-600 hover:text-yellow-800 font-medium"
-                 >
-                   Update Status
-                 </button>
-                                 <button
-                  v-if="order.status === 'Pending'"
-                  @click="cancelOrder(order)"
-                  class="text-sm text-red-600 hover:text-red-800 font-medium"
-                  :disabled="cancellingOrders.includes(order.id)"
-                >
-                  {{ cancellingOrders.includes(order.id) ? 'Cancelling...' : 'Cancel Order' }}
-                </button>
-               </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Desktop: Table Layout -->
-        <div class="hidden md:block overflow-x-auto">
+        <div class="overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tracking Number
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Route
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Sender
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Recipient
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Created
-                </th>
-                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tracking</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Route</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               <tr v-for="order in orders" :key="order.id" class="hover:bg-gray-50">
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm font-medium text-gray-900">
-                    {{ order.trackingNumber }}
-                  </div>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="text-sm text-gray-900 max-w-xs truncate" :title="order.route">
-                    {{ order.route }}
-                  </div>
+                  <div class="text-sm font-medium text-gray-900">{{ order.trackingNumber }}</div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm text-gray-900">{{ order.senderName }}</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm text-gray-900">{{ order.recipientName }}</div>
+                  <div class="text-sm text-gray-900">{{ order.route }}</div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span :class="getStatusBadgeClass(order.status)">
@@ -282,77 +130,63 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {{ formatDate(order.createdAt) }}
                 </td>
-                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                   <div class="flex justify-end space-x-2">
-                     <button
-                       @click="viewOrder(order)"
-                       class="text-primary-600 hover:text-primary-900 font-medium"
-                     >
-                       View
-                     </button>
-                     <button
-                       v-if="order.status === 'Pending'"
-                       @click="updateOrderStatus(order)"
-                       class="text-yellow-600 hover:text-yellow-900 font-medium"
-                     >
-                       Update
-                     </button>
-                                         <button
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <div class="flex space-x-2">
+                    <button
+                      @click="viewOrder(order)"
+                      class="text-sm text-primary-600 hover:text-primary-800 font-medium flex items-center"
+                    >
+                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                      </svg>
+                      View & Track
+                    </button>
+                    <button
+                      v-if="order.status === 'Pending'"
+                      @click="updateOrderStatus(order)"
+                      class="text-sm text-yellow-600 hover:text-yellow-800 font-medium"
+                    >
+                      Update Status
+                    </button>
+                    <button
                       v-if="order.status === 'Pending'"
                       @click="cancelOrder(order)"
-                      class="text-red-600 hover:text-red-900 font-medium"
+                      class="text-sm text-red-600 hover:text-red-800 font-medium"
                       :disabled="cancellingOrders.includes(order.id)"
                     >
-                      {{ cancellingOrders.includes(order.id) ? 'Cancelling...' : 'Cancel' }}
+                      {{ cancellingOrders.includes(order.id) ? 'Cancelling...' : 'Cancel Order' }}
                     </button>
-                   </div>
-                 </td>
+                  </div>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- Pagination -->
-      <div v-if="pagination.totalPages > 1" class="card">
+      <div class="card">
         <div class="flex items-center justify-between">
           <div class="text-sm text-gray-700">
-            Showing {{ ((pagination.currentPage - 1) * pagination.ordersPerPage) + 1 }} to 
+            Showing {{ (pagination.currentPage - 1) * pagination.ordersPerPage + 1 }} to 
             {{ Math.min(pagination.currentPage * pagination.ordersPerPage, pagination.totalOrders) }} of 
             {{ pagination.totalOrders }} orders
           </div>
-          
           <div class="flex items-center space-x-2">
             <button
               @click="goToPage(pagination.currentPage - 1)"
               :disabled="!pagination.hasPreviousPage"
-              class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
-            
-            <div class="flex space-x-1">
-              <template v-for="page in visiblePages" :key="page">
-                <button
-                  v-if="page !== '...'"
-                  @click="goToPage(page)"
-                  :class="[
-                    'px-3 py-2 text-sm border rounded-lg',
-                    page === pagination.currentPage 
-                      ? 'bg-primary-600 text-white border-primary-600' 
-                      : 'border-gray-300 hover:bg-gray-50'
-                  ]"
-                >
-                  {{ page }}
-                </button>
-                <span v-else class="px-3 py-2 text-sm text-gray-500">...</span>
-              </template>
-            </div>
-            
+            <span class="text-sm text-gray-700">
+              Page {{ pagination.currentPage }} of {{ pagination.totalPages }}
+            </span>
             <button
               @click="goToPage(pagination.currentPage + 1)"
               :disabled="!pagination.hasNextPage"
-              class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
@@ -377,14 +211,12 @@ export default {
     const ordersStore = useOrdersStore()
     const toast = useToast()
     
-    // Store-based state
     const orders = computed(() => ordersStore.orders)
     const loading = computed(() => ordersStore.loading.orders)
     const error = computed(() => ordersStore.errors.orders)
     const cancellingOrders = ref([])
     const pagination = computed(() => ordersStore.pagination)
     
-    // Initialize filters from URL query parameters
     const filters = ref({
       status: route.query.status || '',
       page: parseInt(route.query.page) || 1,
@@ -393,7 +225,6 @@ export default {
       sortOrder: route.query.sortOrder || 'DESC'
     })
     
-    // Computed
     const visiblePages = computed(() => {
       const totalPages = pagination.value.totalPages
       const currentPage = pagination.value.currentPage
@@ -405,73 +236,44 @@ export default {
       
       const pages = []
       
-      if (currentPage <= delta + 1) {
-        for (let i = 1; i <= Math.min(delta + 3, totalPages); i++) {
-          pages.push(i)
+      for (let i = Math.max(1, currentPage - delta); i <= Math.min(totalPages, currentPage + delta); i++) {
+        pages.push(i)
+      }
+      
+      if (pages[0] > 1) {
+        pages.unshift(1)
+        if (pages[1] > 2) {
+          pages.splice(1, 0, '...')
         }
-        if (totalPages > delta + 3) {
-          pages.push('...')
-          pages.push(totalPages)
+      }
+      
+      if (pages[pages.length - 1] < totalPages) {
+        if (pages[pages.length - 2] < totalPages - 1) {
+          pages.splice(pages.length - 1, 0, '...')
         }
-      } else if (currentPage >= totalPages - delta) {
-        pages.push(1)
-        if (totalPages > delta + 3) {
-          pages.push('...')
-        }
-        for (let i = Math.max(totalPages - delta - 2, 1); i <= totalPages; i++) {
-          pages.push(i)
-        }
-      } else {
-        pages.push(1)
-        pages.push('...')
-        for (let i = currentPage - delta; i <= currentPage + delta; i++) {
-          pages.push(i)
-        }
-        pages.push('...')
         pages.push(totalPages)
       }
       
       return pages
     })
     
-    // Methods using store
-    const fetchOrders = async () => {
-      try {
-        await ordersStore.fetchOrders({
-          page: filters.value.page,
-          limit: filters.value.limit,
-          status: filters.value.status,
-          sortBy: filters.value.sortBy,
-          sortOrder: filters.value.sortOrder
-        })
-      } catch (err) {
-        // Error is already handled by the store
-        console.error('Error fetching orders:', err)
-      }
-    }
-    
-    // Helper function to update URL with current filters
     const updateURL = () => {
       const query = {}
       
-      // Only add non-default values to URL
       if (filters.value.status) query.status = filters.value.status
       if (filters.value.page > 1) query.page = filters.value.page
       if (filters.value.limit !== 10) query.limit = filters.value.limit
       if (filters.value.sortBy !== 'createdAt') query.sortBy = filters.value.sortBy
       if (filters.value.sortOrder !== 'DESC') query.sortOrder = filters.value.sortOrder
       
-      // Update URL without triggering navigation
       router.replace({ query })
     }
     
     const handleFilterChange = async () => {
-      filters.value.page = 1 // Reset to first page when filters change
+      filters.value.page = 1
       
-      // Update URL
       updateURL()
       
-      // Update store filters and fetch
       await ordersStore.updateFilters({
         status: filters.value.status,
         sortBy: filters.value.sortBy,
@@ -496,7 +298,6 @@ export default {
         sortOrder: 'DESC'
       }
       
-      // Update URL (will clear all query params since all are default values)
       updateURL()
       
       ordersStore.resetFilters()
@@ -507,7 +308,6 @@ export default {
       if (page >= 1 && page <= pagination.value.totalPages) {
         filters.value.page = page
         
-        // Update URL
         updateURL()
         
         await ordersStore.goToPage(page)
@@ -542,12 +342,10 @@ export default {
     }
     
     const viewOrder = (order) => {
-      // Navigate to order details page
       router.push(`/orders/${order.id}`)
     }
     
     const updateOrderStatus = (order) => {
-      // Navigate to order details page where status can be updated
       router.push(`/orders/${order.id}`)
     }
     
@@ -556,32 +354,38 @@ export default {
         return
       }
       
-      // Add order ID to cancelling list
       cancellingOrders.value.push(order.id)
       
       try {
         await ordersStore.cancelOrder(order.id)
         
-        // Show success toast notification
         toast.orderCanceled(order.trackingNumber)
         
       } catch (err) {
         console.error('Error cancelling order:', err)
         
-        // Show error toast
         const errorMessage = ordersStore.errors.deleting || 'Failed to cancel order. Please try again.'
         toast.error(errorMessage, { title: 'Cancellation Failed' })
         
       } finally {
-        // Remove order ID from cancelling list
         cancellingOrders.value = cancellingOrders.value.filter(id => id !== order.id)
       }
     }
     
-    // Watchers
-    watch(() => filters.value.page, fetchOrders)
+    const fetchOrders = async () => {
+      try {
+        await ordersStore.fetchOrders({
+          page: filters.value.page,
+          limit: filters.value.limit,
+          status: filters.value.status,
+          sortBy: filters.value.sortBy,
+          sortOrder: filters.value.sortOrder
+        })
+      } catch (err) {
+        console.error('Error fetching orders:', err)
+      }
+    }
     
-    // Watch for route changes (browser back/forward)
     watch(() => route.query, (newQuery) => {
       filters.value = {
         status: newQuery.status || '',
@@ -591,23 +395,21 @@ export default {
         sortOrder: newQuery.sortOrder || 'DESC'
       }
       
-      // Fetch orders with new filters
       fetchOrders()
     }, { deep: true })
 
     onMounted(async () => {
       await fetchOrders()
     })
-    
+
     return {
       orders,
       loading,
       error,
-      cancellingOrders,
       pagination,
       filters,
       visiblePages,
-      fetchOrders,
+      cancellingOrders,
       handleFilterChange,
       resetFilters,
       goToPage,
@@ -615,7 +417,8 @@ export default {
       formatDate,
       viewOrder,
       updateOrderStatus,
-      cancelOrder
+      cancelOrder,
+      fetchOrders
     }
   }
 }

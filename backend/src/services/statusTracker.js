@@ -1,14 +1,6 @@
 import { OrderStatusHistory } from '../models/index.js';
 
 class StatusTracker {
-  /**
-   * Record a status change for an order
-   * @param {number} orderId - The order ID
-   * @param {string} previousStatus - The previous status (null for initial)
-   * @param {string} newStatus - The new status
-   * @param {string} notes - Optional notes about the change
-   * @returns {Promise<OrderStatusHistory>}
-   */
   static async recordStatusChange(orderId, previousStatus, newStatus, notes = null) {
     try {
       const statusHistory = await OrderStatusHistory.create({
@@ -26,16 +18,11 @@ class StatusTracker {
     }
   }
 
-  /**
-   * Get the complete status history for an order
-   * @param {number} orderId - The order ID
-   * @returns {Promise<OrderStatusHistory[]>}
-   */
   static async getOrderStatusHistory(orderId) {
     try {
       const history = await OrderStatusHistory.findAll({
         where: { orderId },
-        order: [['changedAt', 'ASC']], // Chronological order
+        order: [['changedAt', 'ASC']],
         attributes: [
           'id',
           'previousStatus',
@@ -53,11 +40,6 @@ class StatusTracker {
     }
   }
 
-  /**
-   * Get the latest status change for an order
-   * @param {number} orderId - The order ID
-   * @returns {Promise<OrderStatusHistory|null>}
-   */
   static async getLatestStatusChange(orderId) {
     try {
       const latestChange = await OrderStatusHistory.findOne({
@@ -79,12 +61,6 @@ class StatusTracker {
     }
   }
 
-  /**
-   * Generate a descriptive message for a status change
-   * @param {string} previousStatus - The previous status
-   * @param {string} newStatus - The new status
-   * @returns {string}
-   */
   static getStatusChangeDescription(previousStatus, newStatus) {
     if (!previousStatus) {
       return `Order created with initial status: ${newStatus}`;
@@ -104,11 +80,6 @@ class StatusTracker {
     return descriptions[key] || `Status changed from ${previousStatus} to ${newStatus}`;
   }
 
-  /**
-   * Get status timeline with rich information
-   * @param {number} orderId - The order ID
-   * @returns {Promise<Object[]>}
-   */
   static async getStatusTimeline(orderId) {
     try {
       const history = await this.getOrderStatusHistory(orderId);
@@ -131,11 +102,6 @@ class StatusTracker {
     }
   }
 
-  /**
-   * Get the appropriate icon for a status
-   * @param {string} status - The status
-   * @returns {string}
-   */
   static getStatusIcon(status) {
     const icons = {
       'Pending': 'clock',
@@ -146,11 +112,6 @@ class StatusTracker {
     return icons[status] || 'circle';
   }
 
-  /**
-   * Get the appropriate color class for a status
-   * @param {string} status - The status
-   * @returns {string}
-   */
   static getStatusColor(status) {
     const colors = {
       'Pending': 'yellow',
@@ -161,14 +122,7 @@ class StatusTracker {
     return colors[status] || 'gray';
   }
 
-  /**
-   * Validate if a status transition is allowed
-   * @param {string} currentStatus - Current status
-   * @param {string} newStatus - Proposed new status
-   * @returns {boolean}
-   */
   static isValidStatusTransition(currentStatus, newStatus) {
-    // Same status is not a valid transition
     if (currentStatus === newStatus) {
       return false;
     }
@@ -176,8 +130,8 @@ class StatusTracker {
     const validTransitions = {
       'Pending': ['In Transit', 'Delivered', 'Canceled'],
       'In Transit': ['Delivered', 'Canceled'],
-      'Delivered': [], // Delivered is final (except for special cases)
-      'Canceled': [] // Canceled is final
+      'Delivered': [],
+      'Canceled': []
     };
 
     const allowedTransitions = validTransitions[currentStatus] || [];

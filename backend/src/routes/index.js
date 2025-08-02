@@ -4,16 +4,13 @@ import orderRoutes from './orders.js';
 
 const router = Router();
 
-// API Routes
 router.use('/health', healthRoutes);
 router.use('/orders', orderRoutes);
 
-// API Info route
 router.get('/', (req, res) => {
   res.json({
-    message: 'Welcome to Logistics Tracking API',
+    message: 'Logistics Tracking API',
     version: '1.0.0',
-    timestamp: new Date().toISOString(),
     endpoints: {
       health: '/api/health',
       orders: {

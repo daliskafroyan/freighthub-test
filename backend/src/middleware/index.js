@@ -1,58 +1,31 @@
 import cors from 'cors';
 import helmet from 'helmet';
 
-// CORS configuration
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://yourdomain.com'] // Add your production domain here
-    : ['http://localhost:5173', 'http://localhost:3000'], // Allow dev servers
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
   optionsSuccessStatus: 200
 };
 
-// Error handling middleware
 const errorHandler = (err, req, res, next) => {
   console.error('Error:', err);
-
-  // Sequelize validation errors
-  if (err.name === 'SequelizeValidationError') {
-    return res.status(400).json({
-      error: 'Validation Error',
-      details: err.errors.map(e => ({
-        field: e.path,
-        message: e.message
-      }))
-    });
-  }
-
-  // Sequelize unique constraint errors
-  if (err.name === 'SequelizeUniqueConstraintError') {
-    return res.status(409).json({
-      error: 'Resource already exists',
-      details: err.errors.map(e => ({
-        field: e.path,
-        message: e.message
-      }))
-    });
-  }
-
-  // Default error response
-  res.status(err.status || 500).json({
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong',
+  
+  const statusCode = err.statusCode || 500;
+  const message = err.message || 'Internal Server Error';
+  
+  res.status(statusCode).json({
+    error: message,
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
 };
 
-// 404 handler
 const notFoundHandler = (req, res) => {
   res.status(404).json({
-    error: 'Route not found',
-    path: req.originalUrl,
-    method: req.method
+    error: 'Not Found',
+    message: `Route ${req.originalUrl} not found`
   });
 };
 
-// Request logging middleware
 const requestLogger = (req, res, next) => {
   const start = Date.now();
   
@@ -64,9 +37,4 @@ const requestLogger = (req, res, next) => {
   next();
 };
 
-export {
-  corsOptions,
-  errorHandler,
-  notFoundHandler,
-  requestLogger
-}; 
+export { corsOptions, errorHandler, notFoundHandler, requestLogger }; 

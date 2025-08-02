@@ -5,7 +5,6 @@ import StatusTracker from '../services/statusTracker.js';
 
 const router = Router();
 
-// Validation middleware for order creation
 const validateOrderCreation = (req, res, next) => {
   const { senderName, recipientName, origin, destination } = req.body;
   
@@ -41,22 +40,18 @@ const validateOrderCreation = (req, res, next) => {
   next();
 };
 
-// POST /api/orders - Create new order with auto-generated tracking number
 router.post('/', validateOrderCreation, async (req, res) => {
   try {
     const { senderName, recipientName, origin, destination } = req.body;
     
-    // Generate unique tracking number
     let trackingNumber;
     let isUnique = false;
     let attempts = 0;
     const maxAttempts = 10;
     
-    // Ensure tracking number is unique (retry if collision)
     while (!isUnique && attempts < maxAttempts) {
       trackingNumber = generateTrackingNumber();
       
-      // Check if tracking number already exists
       const existingOrder = await Order.findOne({ 
         where: { trackingNumber } 
       });
@@ -74,27 +69,23 @@ router.post('/', validateOrderCreation, async (req, res) => {
       });
     }
     
-    // Create the order
     const order = await Order.create({
       trackingNumber,
       senderName: senderName.trim(),
       recipientName: recipientName.trim(),
       origin: origin.trim(),
       destination: destination.trim()
-      // status defaults to 'Pending'
     });
     
-    // Record the initial status in history
     try {
       await StatusTracker.recordStatusChange(
         order.id,
-        null, // No previous status for initial creation
+        null,
         order.status,
         'Order created successfully'
       );
     } catch (statusError) {
       console.warn('Failed to record initial status change:', statusError.message);
-      // Don't fail the order creation if status tracking fails
     }
     
     res.status(201).json({
@@ -116,7 +107,6 @@ router.post('/', validateOrderCreation, async (req, res) => {
   } catch (error) {
     console.error('Error creating order:', error);
     
-    // Handle Sequelize validation errors
     if (error.name === 'SequelizeValidationError') {
       return res.status(400).json({
         error: 'Validation failed',
@@ -131,60 +121,52 @@ router.post('/', validateOrderCreation, async (req, res) => {
   }
 });
 
-// GET /api/orders - Get all orders with optional filtering and pagination
 router.get('/', async (req, res) => {
   try {
-    const {
-      status,
-      page = 1,
-      limit = 10,
-      sortBy = 'createdAt',
-      sortOrder = 'DESC'
-    } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+    const status = req.query.status;
+    const sortBy = req.query.sortBy || 'createdAt';
+    const sortOrder = req.query.sortOrder || 'DESC';
     
-    // Build where clause
     const whereClause = {};
     if (status) {
       whereClause.status = status;
     }
     
-    // Calculate offset for pagination
-    const offset = (parseInt(page) - 1) * parseInt(limit);
-    
-    // Get orders with pagination
-    const { rows: orders, count: totalOrders } = await Order.findAndCountAll({
+    const { count, rows: orders } = await Order.findAndCountAll({
       where: whereClause,
-      limit: parseInt(limit),
-      offset: offset,
-      order: [[sortBy, sortOrder.toUpperCase()]],
+      order: [[sortBy, sortOrder]],
+      limit,
+      offset
     });
     
-    // Format response with additional info
-    const formattedOrders = orders.map(order => ({
-      id: order.id,
-      trackingNumber: order.trackingNumber,
-      senderName: order.senderName,
-      recipientName: order.recipientName,
-      origin: order.origin,
-      destination: order.destination,
-      status: order.status,
-      route: order.getFullRoute(),
-      isPending: order.isPending(),
-      isDelivered: order.isDelivered(),
-      createdAt: order.createdAt,
-      updatedAt: order.updatedAt
-    }));
+    const totalPages = Math.ceil(count / limit);
     
     res.json({
       message: 'Orders retrieved successfully',
-      orders: formattedOrders,
+      orders: orders.map(order => ({
+        id: order.id,
+        trackingNumber: order.trackingNumber,
+        senderName: order.senderName,
+        recipientName: order.recipientName,
+        origin: order.origin,
+        destination: order.destination,
+        status: order.status,
+        route: order.getFullRoute(),
+        isPending: order.isPending(),
+        isDelivered: order.isDelivered(),
+        createdAt: order.createdAt,
+        updatedAt: order.updatedAt
+      })),
       pagination: {
-        currentPage: parseInt(page),
-        totalPages: Math.ceil(totalOrders / parseInt(limit)),
-        totalOrders,
-        ordersPerPage: parseInt(limit),
-        hasNextPage: offset + parseInt(limit) < totalOrders,
-        hasPreviousPage: parseInt(page) > 1
+        currentPage: page,
+        totalPages,
+        totalOrders: count,
+        ordersPerPage: limit,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1
       }
     });
     
@@ -197,12 +179,10 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/orders/:id - Get specific order by ID
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Validate ID is a number
     if (!/^\d+$/.test(id)) {
       return res.status(400).json({
         error: 'Invalid order ID',
@@ -219,13 +199,11 @@ router.get('/:id', async (req, res) => {
       });
     }
     
-    // Get status history for the order
     let statusHistory = [];
     try {
       statusHistory = await StatusTracker.getStatusTimeline(order.id);
     } catch (historyError) {
       console.warn('Failed to fetch status history:', historyError.message);
-      // Continue without history if it fails
     }
     
     res.json({
@@ -256,12 +234,10 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// GET /api/orders/track/:tracking_number - Track order by tracking number
 router.get('/track/:tracking_number', async (req, res) => {
   try {
     const { tracking_number } = req.params;
     
-    // Validate tracking number format
     if (!isValidTrackingNumberFormat(tracking_number)) {
       return res.status(400).json({
         error: 'Invalid tracking number format',
@@ -280,16 +256,13 @@ router.get('/track/:tracking_number', async (req, res) => {
       });
     }
     
-    // Get status history for tracking
     let statusHistory = [];
     try {
       statusHistory = await StatusTracker.getStatusTimeline(order.id);
     } catch (historyError) {
       console.warn('Failed to fetch status history for tracking:', historyError.message);
-      // Continue without history if it fails
     }
     
-    // Enhanced tracking response with more details
     res.json({
       message: 'Order tracking information',
       tracking: {
@@ -317,13 +290,11 @@ router.get('/track/:tracking_number', async (req, res) => {
   }
 });
 
-// PUT /api/orders/:id/status - Update order status
 router.put('/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
     
-    // Validate ID
     if (!/^\d+$/.test(id)) {
       return res.status(400).json({
         error: 'Invalid order ID',
@@ -331,7 +302,6 @@ router.put('/:id/status', async (req, res) => {
       });
     }
     
-    // Validate status
     const validStatuses = ['Pending', 'In Transit', 'Delivered', 'Canceled'];
     if (!status || !validStatuses.includes(status)) {
       return res.status(400).json({
@@ -349,7 +319,6 @@ router.put('/:id/status', async (req, res) => {
       });
     }
     
-    // Business rules for status updates using StatusTracker validation
     if (!StatusTracker.isValidStatusTransition(order.status, status)) {
       return res.status(400).json({
         error: 'Invalid status transition',
@@ -359,12 +328,10 @@ router.put('/:id/status', async (req, res) => {
       });
     }
     
-    // Update the status
     const previousStatus = order.status;
     order.status = status;
     await order.save();
     
-    // Record the status change in history
     try {
       await StatusTracker.recordStatusChange(
         order.id,
@@ -374,7 +341,6 @@ router.put('/:id/status', async (req, res) => {
       );
     } catch (statusError) {
       console.warn('Failed to record status change:', statusError.message);
-      // Don't fail the status update if history tracking fails
     }
     
     res.json({
@@ -408,12 +374,10 @@ router.put('/:id/status', async (req, res) => {
   }
 });
 
-// DELETE /api/orders/:id - Cancel order (mark as 'Canceled', don't delete)
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Validate ID
     if (!/^\d+$/.test(id)) {
       return res.status(400).json({
         error: 'Invalid order ID',
@@ -430,7 +394,6 @@ router.delete('/:id', async (req, res) => {
       });
     }
     
-    // Business rule: Only allow cancellation if status is 'Pending'
     if (order.status !== 'Pending') {
       return res.status(400).json({
         error: 'Cannot cancel order',
@@ -438,14 +401,11 @@ router.delete('/:id', async (req, res) => {
       });
     }
     
-    // Store previous status for history tracking
     const previousStatus = order.status;
     
-    // Update status to 'Canceled' instead of deleting
     order.status = 'Canceled';
     await order.save();
     
-    // Record the status change in history
     try {
       await StatusTracker.recordStatusChange(
         order.id,
@@ -455,7 +415,6 @@ router.delete('/:id', async (req, res) => {
       );
     } catch (statusError) {
       console.warn('Failed to record cancellation in history:', statusError.message);
-      // Don't fail the cancellation if history tracking fails
     }
     
     res.json({

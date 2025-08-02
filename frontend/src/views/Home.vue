@@ -1,25 +1,25 @@
 <template>
   <div class="space-y-6">
-    <!-- Header -->
     <div class="bg-white shadow rounded-lg">
-      <div class="px-6 py-4">
-        <h2 class="text-2xl font-bold text-gray-900">Dashboard</h2>
-        <p class="text-gray-600">Welcome to your logistics tracking dashboard</p>
+      <div class="px-4 py-5 sm:p-6">
+        <h2 class="text-lg font-medium text-gray-900">Logistics Dashboard</h2>
+        <p class="mt-1 text-sm text-gray-600">Track your shipments and monitor delivery performance</p>
       </div>
     </div>
 
-    <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <div class="card">
         <div class="flex items-center">
           <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-              <span class="text-white text-sm font-bold">📦</span>
+            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+              </svg>
             </div>
           </div>
           <div class="ml-4">
-            <h3 class="text-lg font-medium text-gray-900">Total Shipments</h3>
-            <p class="text-2xl font-bold text-blue-600">{{ stats.totalShipments }}</p>
+            <div class="text-sm font-medium text-gray-500">Total Shipments</div>
+            <div class="text-2xl font-semibold text-gray-900">{{ stats.totalShipments }}</div>
           </div>
         </div>
       </div>
@@ -27,13 +27,15 @@
       <div class="card">
         <div class="flex items-center">
           <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-              <span class="text-white text-sm font-bold">✅</span>
+            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
             </div>
           </div>
           <div class="ml-4">
-            <h3 class="text-lg font-medium text-gray-900">Delivered</h3>
-            <p class="text-2xl font-bold text-green-600">{{ stats.delivered }}</p>
+            <div class="text-sm font-medium text-gray-500">Delivered</div>
+            <div class="text-2xl font-semibold text-gray-900">{{ stats.delivered }}</div>
           </div>
         </div>
       </div>
@@ -41,13 +43,15 @@
       <div class="card">
         <div class="flex items-center">
           <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
-              <span class="text-white text-sm font-bold">🚛</span>
+            <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              </svg>
             </div>
           </div>
           <div class="ml-4">
-            <h3 class="text-lg font-medium text-gray-900">In Transit</h3>
-            <p class="text-2xl font-bold text-yellow-600">{{ stats.inTransit }}</p>
+            <div class="text-sm font-medium text-gray-500">In Transit</div>
+            <div class="text-2xl font-semibold text-gray-900">{{ stats.inTransit }}</div>
           </div>
         </div>
       </div>
@@ -55,25 +59,24 @@
       <div class="card">
         <div class="flex items-center">
           <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-              <span class="text-white text-sm font-bold">⏳</span>
+            <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
             </div>
           </div>
           <div class="ml-4">
-            <h3 class="text-lg font-medium text-gray-900">Pending</h3>
-            <p class="text-2xl font-bold text-orange-600">{{ stats.pending }}</p>
+            <div class="text-sm font-medium text-gray-500">Pending</div>
+            <div class="text-2xl font-semibold text-gray-900">{{ stats.pending }}</div>
           </div>
         </div>
       </div>
     </div>
 
-
-
-    <!-- Quick Actions -->
     <div class="card">
       <h3 class="text-lg font-medium text-gray-900 mb-4">🚀 Quick Actions</h3>
-                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <router-link 
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <router-link
           to="/orders/create"
           class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors group"
         >
@@ -87,8 +90,8 @@
             <p class="text-sm text-gray-500">Start a new shipment</p>
           </div>
         </router-link>
-        
-        <router-link 
+
+        <router-link
           to="/orders"
           class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors group"
         >
@@ -102,8 +105,6 @@
             <p class="text-sm text-gray-500">Manage existing orders</p>
           </div>
         </router-link>
-
-        
       </div>
     </div>
   </div>
@@ -117,11 +118,9 @@ import { useOrdersStore } from '../stores/orders.js'
 export default {
   name: 'Home',
   setup() {
-    // Use Pinia stores
     const appStore = useAppStore()
     const ordersStore = useOrdersStore()
 
-    // Use real stats from orders store
     const stats = computed(() => {
       const orderCounts = ordersStore.ordersCount
       return {
@@ -135,10 +134,8 @@ export default {
     const loading = computed(() => ordersStore.loading.orders)
 
     onMounted(async () => {
-      // Initialize the app when component mounts
       await appStore.initializeApp()
       
-      // Initialize orders store to get real statistics
       if (ordersStore.orders.length === 0) {
         try {
           await ordersStore.initialize()
