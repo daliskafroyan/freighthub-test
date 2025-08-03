@@ -55,6 +55,10 @@ logistics-tracking-app/
 
 - [Nix](https://nixos.org/download.html) with flakes enabled
 - Git
+- or if you are not using nix, install the dependencies below
+  - Node.js 20
+  - pnpm
+  - Docker Desktop
 
 ### 1. Clone the Repository
 
@@ -64,6 +68,8 @@ cd logistics-tracking-app
 ```
 
 ### 2. Enter Development Environment
+
+**YOU CAN SKIP THIS IF YOU ARE NOT USING NIX**
 
 ```bash
 nix develop
@@ -109,8 +115,6 @@ pnpm install
 # Run database migrations to create tables
 cd backend && pnpm db:migrate
 ```
-
-**Important**: After starting the PostgreSQL container, you must run the migrations to create the database tables. The application won't work without this step!
 
 ### 7. Start Development Servers
 
