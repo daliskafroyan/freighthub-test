@@ -325,6 +325,3 @@ JWT_SECRET=your_jwt_secret
 # Frontend
 VITE_API_BASE_URL=http://localhost:3000
 ```
----
-
-**Happy coding! 🚀** 
