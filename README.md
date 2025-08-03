@@ -103,7 +103,16 @@ docker-compose ps
 pnpm install
 ```
 
-### 6. Start Development Servers
+### 6. Set Up Database Schema
+
+```bash
+# Run database migrations to create tables
+cd backend && pnpm db:migrate
+```
+
+**Important**: After starting the PostgreSQL container, you must run the migrations to create the database tables. The application won't work without this step!
+
+### 7. Start Development Servers
 
 ```bash
 # Start both backend and frontend in parallel
@@ -135,6 +144,14 @@ pnpm dev      # Start development server with nodemon (auto-reload)
 pnpm start    # Start production server
 pnpm test     # Run Jest tests
 pnpm lint     # Run ESLint
+
+# Database Management
+pnpm db:migrate        # Run database migrations
+pnpm db:migrate:undo   # Undo last migration
+pnpm db:seed:all       # Run all seeders
+pnpm db:seed:undo:all  # Undo all seeders
+pnpm db:create         # Create database
+pnpm db:drop           # Drop database
 ```
 
 ## 🔧 Backend Architecture
@@ -304,120 +321,6 @@ JWT_SECRET=your_jwt_secret
 # Frontend
 VITE_API_BASE_URL=http://localhost:3000
 ```
-
-## 🏃‍♂️ Next Steps
-
-This is the foundation setup for Phase 1 (Tasks 1.1-1.4) & Phase 2 (Task 2.1). The project includes:
-
-### Phase 1: Project Setup & Infrastructure ✅
-- ✅ Nix flakes development environment  
-- ✅ pnpm workspaces monorepo structure
-- ✅ Docker PostgreSQL setup with data persistence
-- ✅ Express.js backend with Sequelize ORM
-- ✅ Organized backend architecture (routes, models, middleware)
-- ✅ Health check API endpoints with database connectivity
-- ✅ Vue.js 3 frontend with Composition API
-- ✅ Tailwind CSS styling system
-- ✅ Vite development server with API proxy
-- ✅ Vue Router for client-side routing
-- ✅ Pinia state management with persistence
-- ✅ Responsive dashboard with logistics stats
-- ✅ Environment variable management
-- ✅ Development tooling and configuration
-
-### Phase 2: Database & Models
-- ✅ **Task 2.1**: Sequelize CLI configuration with PostgreSQL
-  - Database migrations and seeders setup
-  - Model generation capabilities
-  - Environment-specific configurations
-  - CommonJS/ES module compatibility
-- ✅ **Task 2.2**: Order Model creation
-  - Complete Order model with validation and enum
-  - Status enum: 'Pending', 'In Transit', 'Delivered', 'Canceled'
-  - Required field validation and custom constraints
-  - Database table with proper indexes and constraints
-- ✅ **Task 2.3**: Database Migration for Orders table
-  - Migration file created with all required fields and proper types
-  - Unique constraint and index for tracking_number implemented
-  - Migration successfully applied to create Orders table
-  - All constraints, indexes, and schema verified working
-
-### Phase 3: Backend API Routes
-- ✅ **Task 3.1**: Order API Routes implementation
-  - Complete CRUD API for order management
-  - Auto-generated unique tracking numbers
-  - Comprehensive validation and error handling
-  - Business rules implementation (status transitions, cancellation rules)
-  - Pagination and filtering for order listings
-  - Enhanced tracking endpoint with status history
-
-### Phase 4: Frontend Components
-- ✅ **Task 4.1**: Create Order Form Component
-  - Beautiful, responsive order creation form with Tailwind CSS
-  - Comprehensive client-side validation (required fields, length limits, cross-field validation)
-  - Full API integration with axios for order creation
-  - Loading states and error handling for network requests
-  - Success messages with automatic redirection to orders list
-  - Real-time route preview and form validation feedback
-
-- ✅ **Task 4.2**: Orders List Component
-  - Advanced orders listing with responsive table/card layouts
-  - Complete API integration with GET /api/orders endpoint
-  - Action buttons: View Details, Update Status, Cancel Order (for pending orders)
-  - Loading states with beautiful spinner animations
-  - Comprehensive error handling for all API failure scenarios
-  - Advanced filtering (status), sorting, and smart pagination
-  - Cancel functionality with confirmation dialog and DELETE API integration
-  - Mobile-responsive design with Tailwind CSS styling
-
-- ✅ **Task 4.3**: Order Details and Status Update Components
-  - Comprehensive OrderDetails component with complete order information display
-  - Integrated status update functionality with business rule validation
-  - TrackOrder component for public order tracking by tracking number
-  - Business rules enforcement (status transition validation, cancel restrictions)
-  - Loading and error states for all operations
-  - Beautiful timeline visualization and delivery progress tracking
-  - Copy tracking number functionality and toast notifications
-  - Consistent Tailwind CSS styling across all components
-
-- ✅ **Task 4.4**: Pinia Store for State Management
-  - Comprehensive orders store with centralized state management
-  - All CRUD operations implemented (fetchOrders, createOrder, updateOrderStatus, cancelOrder, trackOrder)
-  - Advanced state management with loading states, error handling, and pagination
-  - Intelligent getters for filtered data and order counts by status
-  - Complete component integration - all components now use the store
-  - Real-time statistics on dashboard from actual order data
-  - Centralized error handling and user feedback across all operations
-
-### Phase 5: Bonus Features (Optional)
-- ✅ **Task 5.1**: Form Validation and UI Improvements
-  - Professional toast notification system with animations and auto-dismiss
-  - Comprehensive form validation with real-time feedback and error animations
-  - Enhanced loading states with LoadingSkeleton component (7 variants)
-  - Beautiful UI animations (pulse borders, shake effects, fade-in transitions)
-  - Auto-focus management and accessibility improvements
-  - Enhanced Tailwind CSS styling with professional color schemes
-  - Enterprise-grade UX patterns with focus management and keyboard navigation
-  - Complete component integration with consistent notification system
-
-**Upcoming tasks will add:**
-- Database models and migrations
-- Authentication system
-- Shipment tracking features
-- Real-time updates
-- And much more!
-
-## 🤝 Contributing
-
-1. Make sure you're in the Nix development environment (`nix develop`)
-2. Follow the existing code style and conventions
-3. Test your changes locally
-4. Update documentation as needed
-
-## 📄 License
-
-This project is part of a logistics tracking application development phase.
-
 ---
 
 **Happy coding! 🚀** 
